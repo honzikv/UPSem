@@ -18,8 +18,11 @@ class Client {
     sockaddr_in address;
 
 public:
-    Client(const string &id, const sockaddr_in &address);
+    Client(string id, const sockaddr_in &address);
+
+
 };
+
 
 
 #endif //UPSEM_CLIENT_H

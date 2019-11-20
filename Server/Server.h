@@ -5,34 +5,71 @@
 #ifndef UPSEM_SERVER_H
 #define UPSEM_SERVER_H
 
-
+#include <iostream>
+#include <cstring>
+#include <thread>
 #include <netinet/in.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 #include <unistd.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <string.h>
+#include <cstring>
+#include <map>
 #include "Client.h"
+#include "Lobby.h"
+
+#define INPUT_BUFFER_BYTES 1024
+#define DEFAULT_LOGIN_TIMEOUT_SECONDS 60
 
 using namespace std;
 
-#define DEFALT_CLIENT_COUNT 5;
-
 class Server {
 
-    int port;
+    /**
+     * Pocet hernich mistnosti na serveru
+     */
+    int lobbyCount;
 
+    /**
+     * Filedescriptor socketu
+     */
     int fileDescriptor;
 
-    struct sockaddr_in address;
+    /**
+     * delka adresy
+     */
+    int addressLength;
 
-    vector<Client> clients;
+    /**
+     * info o adrese
+     */
+    sockaddr_in address;
+
+    /**
+     * vsechny herni mistnosti
+     */
+    vector<Lobby> lobbies;
+
+    /**
+     * Vlakna s
+     */
+    vector<thread> threadPool;
+
+    /**
+     * Seznam vsech klientu na serveru
+     */
+    map<string, Client> clients;
 
 public:
-    Server(int port);
-};
+    Server(int port, int lobbyCount);
 
+    void run();
+
+    void handleConnection(int socket);
+
+    string sendAuthenticationRequest(int socket);
+};
 
 #endif //UPSEM_SERVER_H

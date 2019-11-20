@@ -4,4 +4,6 @@
 
 #include "Client.h"
 
-Client::Client(const string &id, const sockaddr_in &address) : id(id), address(address) {}
+#include <utility>
+
+Client::Client(string id, const sockaddr_in &address) : id(std::move(id)), address(address) {}
