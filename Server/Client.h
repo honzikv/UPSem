@@ -15,11 +15,13 @@ class Client {
 
     string id;
 
-    sockaddr_in address;
+    int fileDescriptor;
 
 public:
-    Client(string id, const sockaddr_in &address);
+    const string &getId() const;
 
+public:
+    Client(string id, int fileDescriptor);
 
 };
 

@@ -6,6 +6,7 @@
 
 
 Server::Server(int port, int lobbyCount) : lobbyCount(lobbyCount) {
+    this->clients = unordered_set(c)
 
     //Nastaveni filedescriptoru socketu serveru
     if ((this->fileDescriptor = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -51,15 +52,26 @@ void Server::run() {
 }
 
 void Server::handleConnection(int socket) {
+
+    thread threadObj([]{
+    });
+}
+
+const JSONParser &Server::getJsonParser() const {
+    return jsonParser;
+}
+
+bool Server::isLoginUnique(const string nickname) {
+
+    for (const auto& client : clients) {
+        if (nickname == client.getId()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
-string Server::sendAuthenticationRequest(int socket) {
-    auto loginMessage = "Enter username";
-    char buffer[1024] = {0};
-    send(socket, loginMessage, strlen(loginMessage), 0);
-
-    return "null";
-}
 
 

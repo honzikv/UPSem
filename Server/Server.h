@@ -19,8 +19,9 @@
 #include <map>
 #include "Client.h"
 #include "Lobby.h"
+#include "../json-parsing/JSONParser.h"
 
-#define INPUT_BUFFER_BYTES 1024
+#define MESSAGE_BUFFER_BYTES 1024
 #define DEFAULT_LOGIN_TIMEOUT_SECONDS 60
 
 using namespace std;
@@ -58,9 +59,13 @@ class Server {
     vector<thread> threadPool;
 
     /**
-     * Seznam vsech klientu na serveru
+     * Seznam vsech klientu
      */
-    map<string, Client> clients;
+    vector<Client> clients;
+
+    JSONParser jsonParser;
+public:
+    const JSONParser &getJsonParser() const;
 
 public:
     Server(int port, int lobbyCount);
@@ -70,6 +75,8 @@ public:
     void handleConnection(int socket);
 
     string sendAuthenticationRequest(int socket);
+
+    bool isLoginUnique(string login);
 };
 
 #endif //UPSEM_SERVER_H

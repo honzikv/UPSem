@@ -6,4 +6,8 @@
 
 #include <utility>
 
-Client::Client(string id, const sockaddr_in &address) : id(std::move(id)), address(address) {}
+Client::Client(string id, int fileDescriptor) : id(std::move(id)), fileDescriptor(fileDescriptor) {}
+
+const string &Client::getId() const {
+    return id;
+}

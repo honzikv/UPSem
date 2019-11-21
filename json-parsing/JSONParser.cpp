@@ -3,11 +3,10 @@
 //
 
 #include "JSONParser.h"
-#include <stdlib.h>
 
 using namespace std;
 
-string JSONParser::parseValue(string field, string message) {
+string JSONParser::parseStringValue(string field, string message) {
     try {
         json jsonString = message;
         string value = jsonString.value(field, "");

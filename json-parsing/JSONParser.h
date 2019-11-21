@@ -6,6 +6,8 @@
 #define UPSEM_JSONPARSER_H
 #include "../libs/nlohmann/json.hpp"
 
+#define LOGIN_FIELD "login"
+
 using json = nlohmann::json;
 using namespace std;
 
@@ -15,8 +17,7 @@ using namespace std;
 class JSONParser {
 
 public:
-    string parseValue(string field, string message);
-
+    string parseStringValue(string field, string message);
 };
 
 
