@@ -4,11 +4,10 @@
 
 #include "Lobby.h"
 
-Lobby::Lobby(int limit) : limit(limit) {
-}
-
-void Lobby::addClient(Client client) {
+void Lobby::addClient(shared_ptr<Client>& client) {
     if (this->clients.size() < this->limit) {
         clients.push_back(client);
     }
 }
+
+Lobby::Lobby(const shared_ptr<JSONParser>& jsonParser, int limit) : jsonParser(jsonParser), limit(limit) {}

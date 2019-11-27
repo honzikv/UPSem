@@ -51,18 +51,15 @@ void Server::run() {
 }
 
 void Server::handleConnection(int socket) {
-    thread loginThread(handleLogin, socket, this);
-    try {
+//    thread loginThread(handleLogin, socket, this);
+//    try {
+//
+//    }
+//    catch (...) {
+//        loginThread.join();
+//    }
+//    loginThread.join();
 
-    }
-    catch (...) {
-        loginThread.join();
-    }
-    loginThread.join();
-
-}
-const JSONParser& Server::getJsonParser() const {
-    return jsonParser;
 }
 
 bool Server::isLoginUnique(const string nickname) {

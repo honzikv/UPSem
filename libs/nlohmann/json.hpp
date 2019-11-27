@@ -1708,17 +1708,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 
 // This file contains all internal macro definitions
-// You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
+// You MUST include macro_unscope.hpp at the end of JSON.hpp to undef all of them
 
 // exclude unsupported compilers
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
     #if defined(__clang__)
         #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
-            #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
+            #error "unsupported Clang version - see https://github.com/nlohmann/JSON#supported-compilers"
         #endif
     #elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
         #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40800
-            #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+            #error "unsupported GCC version - see https://github.com/nlohmann/JSON#supported-compilers"
         #endif
     #endif
 #endif
@@ -1880,7 +1880,7 @@ class exception : public std::exception
 
     static std::string name(const std::string& ename, int id_)
     {
-        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
+        return "[JSON.exception." + ename + "." + std::to_string(id_) + "] ";
     }
 
   private:
@@ -2515,7 +2515,7 @@ using from_json_function = decltype(T::from_json(std::declval<Args>()...));
 template <typename T, typename U>
 using get_template_function = decltype(std::declval<T>().template get<U>());
 
-// trait checking if JSONSerializer<T>::from_json(json const&, udt&) exists
+// trait checking if JSONSerializer<T>::from_json(JSON const&, udt&) exists
 template <typename BasicJsonType, typename T, typename = void>
 struct has_from_json : std::false_type {};
 
@@ -2530,7 +2530,7 @@ struct has_from_json<BasicJsonType, T,
         const BasicJsonType&, T&>::value;
 };
 
-// This trait checks if JSONSerializer<T>::from_json(json const&) exists
+// This trait checks if JSONSerializer<T>::from_json(JSON const&) exists
 // this overload is used for non-default-constructible user-defined-types
 template <typename BasicJsonType, typename T, typename = void>
 struct has_non_default_from_json : std::false_type {};
@@ -3431,7 +3431,7 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 namespace std
 {
 #if defined(__clang__)
-    // Fix: https://github.com/nlohmann/json/issues/1401
+    // Fix: https://github.com/nlohmann/JSON/issues/1401
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
@@ -14869,7 +14869,7 @@ class basic_json
 
         result["copyright"] = "(C) 2013-2017 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
-        result["url"] = "https://github.com/nlohmann/json";
+        result["url"] = "https://github.com/nlohmann/JSON";
         result["version"]["string"] =
             std::to_string(NLOHMANN_JSON_VERSION_MAJOR) + "." +
             std::to_string(NLOHMANN_JSON_VERSION_MINOR) + "." +

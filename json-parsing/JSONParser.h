@@ -6,9 +6,9 @@
 #define UPSEM_JSONPARSER_H
 #include "../libs/nlohmann/json.hpp"
 
-#define LOGIN_FIELD "login"
 
-using json = nlohmann::json;
+
+using JSON = nlohmann::json;
 using namespace std;
 
 /**
@@ -18,6 +18,27 @@ class JSONParser {
 
 public:
     string parseStringValue(const string& field, const string& message);
+
+    //TODO test
+    string serializeToJSON(const string& field, const string& value) {
+        JSON json;
+        json[field] = value;
+
+        return json.get<string>();
+    }
+
+    string serializeToJSON(const vector<string> fields, const vector<string> values) {
+        JSON json;
+
+        for (auto i = 0; i < fields.size(); i++) {
+            json[fields[i]] = values[i];
+        }
+
+        return json.get<string>();
+    }
+
+    JSON createJSON()
+
 };
 
 

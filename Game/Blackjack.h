@@ -9,10 +9,12 @@
 #include <vector>
 #include "Player.h"
 #include "Deck.h"
+#include "../Server/Server.h"
 #include <memory>
 
-using namespace std;
+#define TIMEOUT_MS 15000
 
+using namespace std;
 
 class Blackjack {
 
@@ -24,21 +26,14 @@ class Blackjack {
 
     shared_ptr<Deck> deck;
 
+    shared_ptr<Server> server;
+
 public:
-    void addPlayer(shared_ptr<Player> player) {
-        players.push_back(player);
-    }
+    void addPlayer(shared_ptr<Player> player);
 
-    void startRound() {
-        auto dealerIndex = rand() % players.size();
-        this->dealer = players.at(dealerIndex); //nastavi dealera
-        players.erase(players.begin() + dealerIndex); //odstrani dealera z hracu
+    void start();
 
-    }
-
-    Blackjack(const int maxPlayerCount) : maxPlayerCount(maxPlayerCount) {
-        this->deck = make_shared<Deck>();
-    }
+    Blackjack(const int maxPlayerCount);
 };
 
 

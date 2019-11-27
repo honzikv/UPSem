@@ -8,7 +8,7 @@ using namespace std;
 
 string JSONParser::parseStringValue(const string& field, const string& message) {
     try {
-        json jsonString = message;
+        JSON jsonString = message;
         string value = jsonString.value(field, "");
         return value;
     }
