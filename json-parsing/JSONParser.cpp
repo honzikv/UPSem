@@ -6,7 +6,7 @@
 
 using namespace std;
 
-string JSONParser::parseStringValue(string field, string message) {
+string JSONParser::parseStringValue(const string& field, const string& message) {
     try {
         json jsonString = message;
         string value = jsonString.value(field, "");

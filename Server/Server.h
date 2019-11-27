@@ -61,7 +61,7 @@ class Server {
     /**
      * Seznam vsech klientu
      */
-    vector<Client> clients;
+    vector<shared_ptr<Client>> clients;
 
     JSONParser jsonParser;
 public:
@@ -73,6 +73,8 @@ public:
     void run();
 
     void handleConnection(int socket);
+
+    void addClient(shared_ptr<Client> client);
 
     string sendAuthenticationRequest(int socket);
 

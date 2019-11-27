@@ -17,7 +17,7 @@ using namespace std;
 class JSONParser {
 
 public:
-    string parseStringValue(string field, string message);
+    string parseStringValue(const string& field, const string& message);
 };
 
 

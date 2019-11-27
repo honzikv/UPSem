@@ -18,10 +18,8 @@ class Client {
     int fileDescriptor;
 
 public:
-    const string &getId() const;
-
-public:
     Client(string id, int fileDescriptor);
+    const string &getId() const;
 
 };
 

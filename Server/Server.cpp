@@ -3,10 +3,9 @@
 //
 
 #include "Server.h"
-
+#include "ThreadFunctions.cpp"
 
 Server::Server(int port, int lobbyCount) : lobbyCount(lobbyCount) {
-    this->clients = unordered_set(c)
 
     //Nastaveni filedescriptoru socketu serveru
     if ((this->fileDescriptor = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -22,7 +21,7 @@ Server::Server(int port, int lobbyCount) : lobbyCount(lobbyCount) {
     this->addressLength = sizeof(address);
 
     //bind socketu
-    if (bind(this->fileDescriptor, (struct sockaddr *) &address, sizeof(this->address)) < 0) {
+    if (bind(this->fileDescriptor, (struct sockaddr*) &address, sizeof(this->address)) < 0) {
         cerr << "Error, OS could not bind socket, try again" << endl;
     }
     cout << "Successfully bound socket to Server, ready to run." << endl;
@@ -44,33 +43,43 @@ void Server::run() {
             exit(EXIT_FAILURE);
         }
 
-        if (auto newConnection = accept(this->fileDescriptor, (struct sockaddr *) &this->address,
-                                        (socklen_t *) &addressLength) >= 0) {
+        if (auto newConnection = accept(this->fileDescriptor, (struct sockaddr*) &this->address,
+                                        (socklen_t*) &addressLength) >= 0) {
             handleConnection(newConnection);
         }
     }
 }
 
 void Server::handleConnection(int socket) {
+    thread loginThread(handleLogin, socket, this);
+    try {
 
-    thread threadObj([]{
-    });
+    }
+    catch (...) {
+        loginThread.join();
+    }
+    loginThread.join();
+
 }
-
-const JSONParser &Server::getJsonParser() const {
+const JSONParser& Server::getJsonParser() const {
     return jsonParser;
 }
 
 bool Server::isLoginUnique(const string nickname) {
 
     for (const auto& client : clients) {
-        if (nickname == client.getId()) {
+        if (nickname == client.get()->getId()) {
             return false;
         }
     }
 
     return true;
 }
+
+void Server::addClient(shared_ptr<Client> client) {
+    this->clients.push_back(client);
+}
+
 
 
 
