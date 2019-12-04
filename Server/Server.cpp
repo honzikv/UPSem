@@ -31,10 +31,6 @@ void Server::run() {
 
     cout << "Launching Server ..." << endl;
 
-    //Vytvori lobbies podle zadaneho poctu
-    for (auto i = 0; i < lobbyCount; i++) {
-        lobbies.emplace_back(10);
-    }
 
     while (true) {
 

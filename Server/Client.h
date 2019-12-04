@@ -5,7 +5,7 @@
 #ifndef UPSEM_CLIENT_H
 #define UPSEM_CLIENT_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <string>
 #include <netinet/in.h>
 

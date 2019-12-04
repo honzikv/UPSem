@@ -9,7 +9,6 @@
 #include <vector>
 #include <memory>
 #include "Client.h"
-#include "../json-parsing/JSONParser.h"
 
 using namespace std;
 
@@ -17,14 +16,13 @@ class Lobby {
 
     vector<shared_ptr<Client>> clients;
 
-    shared_ptr<JSONParser> jsonParser;
 
     bool isFull = false;
 
     int limit;
 
 public:
-    Lobby(const shared_ptr<JSONParser>& jsonParser, int limit);
+    Lobby(int limit);
 
     void addClient(shared_ptr<Client>& client);
 
