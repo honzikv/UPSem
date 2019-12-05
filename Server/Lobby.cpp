@@ -9,5 +9,3 @@ void Lobby::addClient(shared_ptr<Client>& client) {
         clients.push_back(client);
     }
 }
-
-Lobby::Lobby(const shared_ptr<JSONParser>& jsonParser, int limit) : jsonParser(jsonParser), limit(limit) {}

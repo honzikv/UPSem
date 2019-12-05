@@ -19,7 +19,6 @@
 #include <map>
 #include "Client.h"
 #include "Lobby.h"
-#include "../json-parsing/JSONParser.h"
 
 #define DEFAULT_LOGIN_TIMEOUT_SECONDS 60
 

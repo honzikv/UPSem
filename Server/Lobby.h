@@ -16,7 +16,6 @@ class Lobby {
 
     vector<shared_ptr<Client>> clients;
 
-
     bool isFull = false;
 
     int limit;
@@ -29,7 +28,6 @@ public:
     void sendPlayerCountToClient(int fileDescriptor) {
     }
 
-    void
 };
 
 

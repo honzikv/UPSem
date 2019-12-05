@@ -3,7 +3,6 @@
 //
 
 #include "Server.h"
-#include "ThreadFunctions.cpp"
 
 Server::Server(int port, int lobbyCount) : lobbyCount(lobbyCount) {
 
