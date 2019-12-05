@@ -19,10 +19,12 @@ class Client {
 
 public:
     Client(string id, int fileDescriptor);
-    const string &getId() const;
+
+    const string& getId() const;
+
+    int getFileDescriptor() const;
 
 };
-
 
 
 #endif //UPSEM_CLIENT_H

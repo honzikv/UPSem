@@ -11,3 +11,7 @@ Client::Client(string id, int fileDescriptor) : id(std::move(id)), fileDescripto
 const string &Client::getId() const {
     return id;
 }
+
+int Client::getFileDescriptor() const {
+    return fileDescriptor;
+}

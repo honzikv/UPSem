@@ -33,7 +33,7 @@ private:
     void deserialize(string &data);
 
 public:
-    void parse(const char *charArray);
+    void deserialize(const char *charArray);
 
     string getValue(const string &field);
 };

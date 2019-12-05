@@ -17,6 +17,8 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <map>
+#include <unordered_set>
+#include <algorithm>
 #include "Client.h"
 #include "Lobby.h"
 
@@ -51,6 +53,8 @@ class Server {
      */
     vector<shared_ptr<Client>> clients;
 
+    unordered_set<string> clientIds;
+
 public:
     Server(int port, int lobbyCount);
 
@@ -59,6 +63,15 @@ public:
     void handleConnection(int socket);
 
     void addClient(shared_ptr<Client> client);
+
+    void removeClient(shared_ptr<Client>& client) {
+        clientIds.erase(client->getId());
+        clients.erase(remove(clients.begin(),clients.end(), client), clients.end());
+    }
+
+    int getClientCount() {
+        return clients.size();
+    }
 
     bool isLoginUnique(string login);
 };

@@ -13,5 +13,6 @@ int main() {
     serializer.clear();
     serializer.append("test", "ok");
     serializer.append("test23", "boomer");
-    cout << serializer.serialize();
+    cout << serializer.serialize() << endl;
+
 }

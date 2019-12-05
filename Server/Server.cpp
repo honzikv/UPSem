@@ -58,18 +58,12 @@ void Server::handleConnection(int socket) {
 }
 
 bool Server::isLoginUnique(const string nickname) {
-
-    for (const auto& client : clients) {
-        if (nickname == client.get()->getId()) {
-            return false;
-        }
-    }
-
-    return true;
+    return clientIds.find(nickname) == clientIds.end();
 }
 
 void Server::addClient(shared_ptr<Client> client) {
     this->clients.push_back(client);
+    this->clientIds.emplace(client->getId());
 }
 
 

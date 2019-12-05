@@ -16,27 +16,11 @@ private:
     unordered_map<string, string> fields;
 
 public:
-    void append(const string &field, const string &value) {
-        fields.emplace(field, value);
-    }
+    void append(const string &field, const string &value);
 
-    void clear() {
-        fields.clear();
-    }
+    void clear();
 
-    string serialize() {
-        auto data = string("{");
-
-        for (auto const &[field, value] : fields) {
-            data.append(field + ":" + value + ",");
-        }
-        //smazani posledni carky
-        data.erase(data.length() - 1, data.length() - 1);
-        data.append("}");
-
-        clear(); //Smaze vsechny data
-        return data;
-    }
+    string serialize();
 };
 
 

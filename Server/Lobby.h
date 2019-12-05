@@ -18,16 +18,29 @@ class Lobby {
 
     bool isFull = false;
 
-    int limit;
+    const int limit;
+
+    const int id;
 
 public:
-    Lobby(int limit);
+    int getId() const;
+
+private:
+
+    int isRunning = false;
+
+public:
+    Lobby(int limit, int id);
 
     void addClient(shared_ptr<Client>& client);
 
-    void sendPlayerCountToClient(int fileDescriptor) {
+    int getClientCount() {
+        return clients.size();
     }
 
+    string getState() {
+        return to_string(id) + ";" + to_string(getClientCount()) + "/" + to_string(clients.size());
+    }
 };
 
 
