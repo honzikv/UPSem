@@ -28,14 +28,15 @@ private:
      */
     unique_ptr<string> data;
 
+    /**
+     * Hashmapa, ktera uklada vsechna pole
+     */
     unordered_map<string, string> fields;
-
-    void deserialize(string &data);
 
 public:
     void deserialize(const char *charArray);
 
-    string getValue(const string &field);
+    string valueOf(const string &field);
 };
 
 

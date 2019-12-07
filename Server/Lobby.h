@@ -4,6 +4,7 @@
 
 #ifndef UPSEM_LOBBY_H
 #define UPSEM_LOBBY_H
+#define MAX_CLIENTS_PER_LOBBY 7
 
 #include <cstdlib>
 #include <vector>
@@ -16,7 +17,7 @@ class Lobby {
 
     vector<shared_ptr<Client>> clients;
 
-    bool isFull = false;
+    bool full = false;
 
     const int limit;
 
@@ -39,8 +40,10 @@ public:
     }
 
     string getState() {
-        return to_string(id) + ";" + to_string(getClientCount()) + "/" + to_string(clients.size());
+        return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(clients.size());
     }
+
+    bool isFull() const;
 };
 
 

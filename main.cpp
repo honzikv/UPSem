@@ -7,12 +7,9 @@
 #include "Server/serialization/Serializer.h"
 
 
+
 int main() {
 
-    auto serializer = Serializer();
-    serializer.clear();
-    serializer.append("test", "ok");
-    serializer.append("test23", "boomer");
-    cout << serializer.serialize() << endl;
-
+    auto server = Server(4431,10);
+    server.run();
 }

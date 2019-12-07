@@ -22,16 +22,10 @@
 #include "Client.h"
 #include "Lobby.h"
 
-#define DEFAULT_LOGIN_TIMEOUT_SECONDS 60
 
 using namespace std;
 
 class Server {
-
-    /**
-     * Pocet hernich mistnosti na serveru
-     */
-    int lobbyCount;
 
     /**
      * Filedescriptor socketu
@@ -53,6 +47,8 @@ class Server {
      */
     vector<shared_ptr<Client>> clients;
 
+    vector<shared_ptr<Lobby>> lobbies;
+
     unordered_set<string> clientIds;
 
 public:
@@ -62,9 +58,9 @@ public:
 
     void handleConnection(int socket);
 
-    void addClient(shared_ptr<Client> client);
+    const vector<shared_ptr<Lobby>>& getLobbies() const;
 
-    void removeClient(shared_ptr<Client>& client) {
+    void removeClient(shared_ptr<const Client>& client) {
         clientIds.erase(client->getId());
         clients.erase(remove(clients.begin(),clients.end(), client), clients.end());
     }
@@ -73,7 +69,9 @@ public:
         return clients.size();
     }
 
-    bool isLoginUnique(string login);
-};
+    bool isLoginUnique(const string& login);
 
-#endif //UPSEM_SERVER_H
+    void addClient(const shared_ptr<Client>& client);
+};const
+
+#endif UPSEM_SERVER_H
