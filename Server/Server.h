@@ -33,12 +33,7 @@ class Server {
     /**
      * Filedescriptor socketu
      */
-    int mainSocket;
-
-    /**
-     * delka adresy
-     */
-    int addressLength;
+    int masterSocket;
 
     /**
      * info o adrese
@@ -60,22 +55,12 @@ public:
 
     void run();
 
-    void handleConnection(int clientFileDescriptor);
-
-    const vector<shared_ptr<Lobby>>& getLobbies() const;
-
     void removeClient(shared_ptr<const Client>& client) {
         clientIds.erase(client->getId());
         clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
     }
 
-    int getClientCount() {
-        return clients.size();
-    }
-
     bool isLoginUnique(const string& login);
-
-    void addClient(const shared_ptr<Client>& client);
 
     shared_ptr<Client> getClient(int socket);
 
