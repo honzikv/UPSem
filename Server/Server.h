@@ -21,7 +21,10 @@
 #include <algorithm>
 #include "Client.h"
 #include "Lobby.h"
-
+#include "serialization/TCPData.h"
+#include "communication/FieldConstants.h"
+#include "communication/Constants.h"
+#include "communication/ValueConstants.h"
 
 using namespace std;
 
@@ -30,7 +33,7 @@ class Server {
     /**
      * Filedescriptor socketu
      */
-    int fileDescriptor;
+    int mainSocket;
 
     /**
      * delka adresy
@@ -49,6 +52,7 @@ class Server {
 
     vector<shared_ptr<Lobby>> lobbies;
 
+
     unordered_set<string> clientIds;
 
 public:
@@ -56,13 +60,13 @@ public:
 
     void run();
 
-    void handleConnection(int socket);
+    void handleConnection(int clientFileDescriptor);
 
     const vector<shared_ptr<Lobby>>& getLobbies() const;
 
     void removeClient(shared_ptr<const Client>& client) {
         clientIds.erase(client->getId());
-        clients.erase(remove(clients.begin(),clients.end(), client), clients.end());
+        clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
     }
 
     int getClientCount() {
@@ -72,6 +76,20 @@ public:
     bool isLoginUnique(const string& login);
 
     void addClient(const shared_ptr<Client>& client);
-};const
 
-#endif UPSEM_SERVER_H
+    shared_ptr<Client> getClient(int socket);
+
+    shared_ptr<Lobby> getLobby(int id);
+
+    bool sendToClient(int socket, const string& data);
+
+    bool sendToClient(Client& client, const string& data);
+
+    void sendLoginUnique(int socket, bool isUnique);
+
+    void sendLobbyList(shared_ptr<Client> sharedPtr);
+
+    void sendLobbyJoinable(Client& client, bool joinable);
+};
+
+#endif

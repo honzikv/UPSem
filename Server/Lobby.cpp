@@ -14,7 +14,8 @@ int Lobby::getId() const {
     return id;
 }
 
-bool Lobby::isFull() const {
-    return full;
+bool Lobby::isJoinable() const {
+    return joinable;
 }
+
 

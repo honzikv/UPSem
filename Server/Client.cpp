@@ -15,3 +15,11 @@ const string &Client::getId() const {
 int Client::getFileDescriptor() const {
     return fileDescriptor;
 }
+
+bool Client::isAuthenticated1() const {
+    return isAuthenticated;
+}
+
+void Client::setIsAuthenticated(bool authenticated) {
+    Client::isAuthenticated = authenticated;
+}

@@ -17,12 +17,18 @@ class Client {
 
     int fileDescriptor;
 
+    bool isAuthenticated = false;
+
 public:
     Client(string id, int fileDescriptor);
 
     const string& getId() const;
 
     int getFileDescriptor() const;
+
+    bool isAuthenticated1() const;
+
+    void setIsAuthenticated(bool isAuthenticated);
 
 };
 

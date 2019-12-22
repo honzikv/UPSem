@@ -17,7 +17,7 @@ class Lobby {
 
     vector<shared_ptr<Client>> clients;
 
-    bool full = false;
+    bool joinable = false;
 
     const int limit;
 
@@ -26,9 +26,7 @@ class Lobby {
 public:
     int getId() const;
 
-private:
-
-    int isRunning = false;
+    bool isJoinable() const;
 
 public:
     Lobby(int limit, int id);
@@ -43,7 +41,6 @@ public:
         return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(clients.size());
     }
 
-    bool isFull() const;
 };
 
 
