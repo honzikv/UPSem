@@ -25,4 +25,12 @@ bool Lobby::isJoinable() const {
     return joinable;
 }
 
+string Lobby::getState() {
+    return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(limit);
+}
+
+int Lobby::getClientCount() {
+    return clients.size();
+}
+
 

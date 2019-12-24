@@ -19,7 +19,8 @@
 #include "Client.h"
 #include "Lobby.h"
 #include "communication/Constants.h"
-#include "communication/MessageWriter.h"
+#include "serialization/TCPData.h"
+#include "MessageHandler.h"
 
 using namespace std;
 
@@ -42,10 +43,9 @@ class Server {
 
         vector<shared_ptr<Lobby>> lobbies;
 
-        unique_ptr<RequestHandler> requestHandler;
+        unique_ptr<MessageHandler> messageHandler;
 
         unordered_set<string> clientIds;
-
 
     public:
         Server(int port, int lobbyCount);

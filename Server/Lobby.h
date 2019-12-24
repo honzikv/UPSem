@@ -15,31 +15,27 @@ using namespace std;
 
 class Lobby {
 
-    vector<shared_ptr<Client>> clients;
+        vector<shared_ptr<Client>> clients;
 
-    bool joinable = false;
+        bool joinable = false;
 
-    const int limit;
+        const int limit;
 
-    const int id;
+        const int id;
 
-public:
-    int getId() const;
+    public:
+        Lobby(int limit, int id);
 
-    bool isJoinable() const;
+        int getId() const;
 
-public:
-    Lobby(int limit, int id);
+        bool isJoinable() const;
 
-    bool addClient(Client& client);
 
-    int getClientCount() {
-        return clients.size();
-    }
+        bool addClient(shared_ptr<Client>& client);
 
-    string getState() {
-        return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(limit);
-    }
+        int getClientCount();
+
+        string getState();
 
 };
 

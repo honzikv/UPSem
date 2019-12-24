@@ -3,6 +3,7 @@
 //
 
 #include "Server.h"
+#include "MessageHandler.h"
 
 Server::Server(int port, int lobbyCount) {
 
@@ -11,8 +12,6 @@ Server::Server(int port, int lobbyCount) {
         cerr << "Error, OS could not create socket for the Server, try again" << endl;
         exit(EXIT_FAILURE);
     }
-
-    this->requestHandler = make_unique<RequestHandler>();
 
     //Nastaveni adresy serveru
     memset(&address, 0, sizeof(address));
@@ -30,6 +29,8 @@ Server::Server(int port, int lobbyCount) {
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
     }
+
+    this->messageHandler = make_unique<MessageHandler>(*this);
 }
 
 void Server::run() {
@@ -99,9 +100,7 @@ void Server::run() {
                     auto client = getClient(clientSocket);
 
                     if (client == nullptr) {
-                        requestHandler->
                     } else {
-                        requestHandler->handleClientRequest(message, client);
                     }
 
                 }
