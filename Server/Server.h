@@ -20,7 +20,7 @@
 #include "Lobby.h"
 #include "communication/Constants.h"
 #include "serialization/TCPData.h"
-#include "MessageHandler.h"
+#include "communication/MessageHandler.h"
 
 using namespace std;
 
@@ -54,7 +54,7 @@ class Server {
 
         void setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescriptorSet, int& maxSocket) const;
 
-        void kickClient(Client& client);
+        void kickClient(shared_ptr<Client>& client);
 
         const shared_ptr<Client>& getClient(int socket);
 
@@ -63,6 +63,8 @@ class Server {
         const vector<shared_ptr<Lobby>>& getLobbies() const;
 
         bool isLoginUnique(string basicString);
+
+        bool isLobbyJoinable(int lobbyId);
 };
 
 #endif

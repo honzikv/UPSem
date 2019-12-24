@@ -10,5 +10,8 @@
 #define JOIN_LOBBY "joinLobby"
 #define TRUE "true"
 #define FALSE "false"
+#define PING "ping"
+#define REQUEST "request"
+#define RESPONSE "response"
 
 #endif //UPSEM_VALUES_H

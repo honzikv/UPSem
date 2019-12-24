@@ -3,7 +3,7 @@
 //
 
 #include "Server.h"
-#include "MessageHandler.h"
+#include "communication/MessageHandler.h"
 
 Server::Server(int port, int lobbyCount) {
 
@@ -100,7 +100,9 @@ void Server::run() {
                     auto client = getClient(clientSocket);
 
                     if (client == nullptr) {
+                        messageHandler->handleSocketMessage(clientSocket, message);
                     } else {
+
                     }
 
                 }
@@ -133,7 +135,7 @@ void Server::setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescript
     }
 }
 
-void Server::kickClient(Client& client) {
+void Server::kickClient(shared_ptr<Client>& client) {
 
 }
 
@@ -162,6 +164,16 @@ const vector<shared_ptr<Lobby>>& Server::getLobbies() const {
 }
 
 bool Server::isLoginUnique(string basicString) {
+    return false;
+}
+
+bool Server::isLobbyJoinable(int lobbyId) {
+
+    for (auto lobby : lobbies) {
+        if (lobby->getId() == lobbyId) {
+            return lobby->isJoinable();
+        }
+    }
     return false;
 }
 
