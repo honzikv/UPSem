@@ -54,13 +54,11 @@ public:
         }
         data.append("dataType").append(":");
 
-        if (dataType == REQUEST) {
+        if (dataType == DATATYPE_REQUEST) {
             data.append("request");
-        }
-        else if (dataType == RESPONSE) {
+        } else if (dataType == DATATYPE_RESPONSE) {
             data.append("response");
-        }
-        else {
+        } else {
             data.append("ping");
         }
 
@@ -77,6 +75,7 @@ private:
 
         //Parsing objektu
         if (data->find_first_of("{") != 0 || data->find_last_of("}") != data->length() - 1) {
+            cerr << "error while parsing data" << endl;
             throw exception();
         }
 

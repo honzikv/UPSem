@@ -7,74 +7,62 @@
 
 #include <iostream>
 #include <cstring>
-#include <thread>
 #include <netinet/in.h>
 #include <cstdlib>
 #include <vector>
 #include <unistd.h>
 #include <cstdio>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <cstring>
-#include <map>
 #include <unordered_set>
 #include <algorithm>
+#include <memory>
 #include "Client.h"
 #include "Lobby.h"
-#include "serialization/TCPData.h"
-#include "communication/FieldConstants.h"
 #include "communication/Constants.h"
-#include "communication/ValueConstants.h"
+#include "communication/MessageWriter.h"
 
 using namespace std;
 
 class Server {
 
-    /**
-     * Filedescriptor socketu
-     */
-    int masterSocket;
+        /**
+         * Master socket pro select()
+         */
+        int masterSocket;
 
-    /**
-     * info o adrese
-     */
-    sockaddr_in address;
+        /**
+         * info o adrese
+         */
+        sockaddr_in address;
 
-    /**
-     * Seznam vsech klientu
-     */
-    vector<shared_ptr<Client>> clients;
+        /**
+         * Seznam vsech klientu
+         */
+        vector<shared_ptr<Client>> clients;
 
-    vector<shared_ptr<Lobby>> lobbies;
+        vector<shared_ptr<Lobby>> lobbies;
+
+        unique_ptr<RequestHandler> requestHandler;
+
+        unordered_set<string> clientIds;
 
 
-    unordered_set<string> clientIds;
+    public:
+        Server(int port, int lobbyCount);
 
-public:
-    Server(int port, int lobbyCount);
+        void run();
 
-    void run();
+        void setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescriptorSet, int& maxSocket) const;
 
-    void removeClient(shared_ptr<const Client>& client) {
-        clientIds.erase(client->getId());
-        clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
-    }
+        void kickClient(Client& client);
 
-    bool isLoginUnique(const string& login);
+        const shared_ptr<Client>& getClient(int socket);
 
-    shared_ptr<Client> getClient(int socket);
+        const shared_ptr<Lobby>& getLobby(int lobbyId);
 
-    shared_ptr<Lobby> getLobby(int id);
+        const vector<shared_ptr<Lobby>>& getLobbies() const;
 
-    bool sendToClient(int socket, const string& data);
-
-    bool sendToClient(Client& client, const string& data);
-
-    void sendLoginUnique(int socket, bool isUnique);
-
-    void sendLobbyList(shared_ptr<Client> sharedPtr);
-
-    void sendLobbyJoinable(Client& client, bool joinable);
+        bool isLoginUnique(string basicString);
 };
 
 #endif

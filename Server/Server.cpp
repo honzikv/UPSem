@@ -12,6 +12,7 @@ Server::Server(int port, int lobbyCount) {
         exit(EXIT_FAILURE);
     }
 
+    this->requestHandler = make_unique<RequestHandler>();
 
     //Nastaveni adresy serveru
     memset(&address, 0, sizeof(address));
@@ -40,29 +41,29 @@ void Server::run() {
 
     int addrlen = sizeof(address);
 
+    //filedeskriptory socketu
     fd_set readfds;
+
+    //maximalni socket
     auto maxSocket = 0;
+
+    //list se sockety klientu
     auto clientSockets = vector<int>();
+
+    //buffer pro přečtenou zprávu
     char buffer[MAX_BUFFER_SIZE_BYTES];
+
+    //timeout klienta
     timeval timeout;
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 300;
 
     while (true) {
         FD_ZERO(&readfds);
         FD_SET(masterSocket, &readfds);
         maxSocket = masterSocket;
 
-        for (const auto& clientSocket : clientSockets) {
-            if (clientSocket > maxSocket) {
-                maxSocket = clientSocket;
-            }
-
-            if (clientSocket > 0) {
-                FD_SET(clientSocket, &readfds);
-            }
-        }
-
+        setMaxSocket(clientSockets, readfds, maxSocket);
         auto activity = select(maxSocket + 1, &readfds, NULL, NULL, &timeout);
 
         if (FD_ISSET(masterSocket, &readfds)) {
@@ -81,132 +82,88 @@ void Server::run() {
         else {
             for (auto i = clientSockets.begin(); i != clientSockets.end(); i++) {
                 //ziskani reference
-                cout << to_string(i.operator*()) << endl;
                 auto clientSocket = i.operator*();
 
-                auto bytesRead = read(clientSocket, buffer, MAX_BUFFER_SIZE_BYTES - 1);
-                cout<< bytesRead << endl;
+                memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
+                auto bytesRead = read(clientSocket, buffer, MAX_BUFFER_SIZE_BYTES);
 
                 if (bytesRead <= 0) {
-                    cout << clientSocket << " removed" << endl;
-                    clientSockets.erase(i);
+                    cout << "client disconnected" << endl;
+                    i = clientSockets.erase(i);
                     close(clientSocket);
                     continue;
                 }
 
-                auto message = TCPData(buffer);
-                auto requestValue = message.valueOf(REQUEST);
-                auto client = getClient(clientSocket);
+                try {
+                    auto message = TCPData(buffer);
+                    auto client = getClient(clientSocket);
 
-                if (client == nullptr) {
-                    auto username = message.valueOf(USERNAME);
-                    if (isLoginUnique(username)) {
-                        sendLoginUnique(clientSocket, true);
-                        clients.push_back(make_shared<Client>(username, clientSocket));
-                    }
-                    else {
-                        sendLoginUnique(clientSocket, false);
-                    }
-                }
-
-                if (requestValue == LOBBY_LIST) {
-                    sendLobbyList(client);
-                }
-
-                if (requestValue == JOIN_LOBBY) {
-                    auto lobby = getLobby(stoi(message.valueOf(LOBBY_ID)));
-                    if (lobby == nullptr) {
-                        throw exception();
-                    }
-
-                    if (lobby->isJoinable()) {
-                        lobby->addClient(client);
-                        sendLobbyJoinable(client.operator*(), true);
-                        //Klienta připojíme do lobby a odstraníme ho z aktivních socketů selectu
-                        clientSockets.erase(i);
+                    if (client == nullptr) {
+                        requestHandler->
                     } else {
-                        sendLobbyJoinable(client.operator*(), false);
+                        requestHandler->handleClientRequest(message, client);
                     }
+
+                }
+                catch (exception&) {
+                    cerr << "client send incorrect input, disconnecting" << endl;
+                    i = clientSockets.erase(i);
+                    close(clientSocket);
                 }
             }
+
         }
     }
 }
 
-void handle() {
-//    auto requestValue = message.valueOf(REQUEST);
-//
-//    if (requestValue == LOBBY_LIST) {
-//        sendLobbyList(client);
-//    }
-//
-//    if (requestValue == JOIN_LOBBY) {
-//        auto lobby = getLobby(stoi(message.valueOf(LOBBY_ID)));
-//        if (lobby == nullptr) {
-//            throw exception();
-//        }
-//
-//        if (lobby->isJoinable()) {
-//            lobby->addClient(client);
-//            sendLobbyJoinable(client.operator*(), true);
-//            //Klienta připojíme do lobby a odstraníme ho z aktivních socketů selectu
-//            sockets.erase(remove(sockets.begin(), sockets.end(), socket), sockets.end());
-//            break;
-//        } else {
-//            sendLobbyJoinable(client.operator*(), false);
-//        }
-//    }
-}
+/**
+ * Nastaví maximální socket
+ * @param clientSockets vektor se sockety klientů
+ * @param fileDescriptorSet set file descriptorů
+ * @param maxSocket reference na maximální socket
+ */
+void Server::setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescriptorSet, int& maxSocket) const {
+    for (const auto& clientSocket : clientSockets) {
+        if (clientSocket > maxSocket) {
+            maxSocket = clientSocket;
+        }
 
-bool Server::isLoginUnique(const string& nickname) {
-    return clientIds.find(nickname) == clientIds.end();
-}
-
-void Server::sendLobbyList(shared_ptr<Client> client) {
-    auto message = TCPData(RESPONSE);
-    for (const auto& lobby : lobbies) {
-        message.add(to_string(lobby->getId()), lobby->getState());
-    }
-
-    sendToClient(client.operator*(), message.serialize());
-}
-
-void Server::sendLoginUnique(int socket, bool isUnique) {
-    auto message = TCPData(RESPONSE);
-    message.add("isUnique", to_string(isUnique));
-    sendToClient(socket, message.serialize());
-}
-
-bool Server::sendToClient(Client& client, const string& data) {
-    return sendToClient(client.getFileDescriptor(), data);
-}
-
-bool Server::sendToClient(int socket, const string& data) {
-    return send(socket, data.c_str(), data.length(), 0) > 0;
-}
-
-void Server::sendLobbyJoinable(Client& client, bool joinable) {
-    auto response = TCPData(RESPONSE);
-    response.add(IS_JOINABLE, to_string(joinable));
-    sendToClient(client, response.serialize());
-}
-
-shared_ptr<Lobby> Server::getLobby(int id) {
-    for (const auto& lobby: lobbies) {
-        if (lobby->getId() == id) {
-            return lobby;
+        if (clientSocket > 0) {
+            FD_SET(clientSocket, &fileDescriptorSet);
         }
     }
+}
+
+void Server::kickClient(Client& client) {
+
+}
+
+const shared_ptr<Client>& Server::getClient(int socket) {
+    for (const auto& clientPtr : clients) {
+        if (clientPtr->getFileDescriptor() == socket) {
+            return clientPtr;
+        }
+    }
+
     return nullptr;
 }
 
-shared_ptr<Client> Server::getClient(int socket) {
-    for (const auto& client : clients) {
-        if (client->getFileDescriptor() == socket) {
-            return client;
+const shared_ptr<Lobby>& Server::getLobby(int lobbyId) {
+    for (const auto& lobbyPtr : lobbies) {
+        if (lobbyPtr->getId() == lobbyId) {
+            return lobbyPtr;
         }
     }
+
     return nullptr;
+}
+
+const vector<shared_ptr<Lobby>>& Server::getLobbies() const {
+    return lobbies;
+}
+
+bool Server::isLoginUnique(string basicString) {
+    return false;
 }
 
 

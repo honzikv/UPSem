@@ -31,14 +31,14 @@ public:
 public:
     Lobby(int limit, int id);
 
-    void addClient(shared_ptr<Client>& client);
+    bool addClient(Client& client);
 
     int getClientCount() {
         return clients.size();
     }
 
     string getState() {
-        return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(clients.size());
+        return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(limit);
     }
 
 };

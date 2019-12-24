@@ -3,9 +3,16 @@
 //
 
 #include "Lobby.h"
+#include <algorithm>
 
-void Lobby::addClient(shared_ptr<Client>& client) {
+bool Lobby::addClient(shared_ptr<Client>& client) {
+
+    if (find(clients.begin(),clients.end(), client) != clients.end()) {
+        return false;
+    }
+
     clients.push_back(client);
+    return true;
 }
 
 Lobby::Lobby(int limit, int id) : limit(limit), id(id) {}

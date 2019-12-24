@@ -13,22 +13,27 @@ using namespace std;
 
 class Client {
 
-    string id;
+        string id;
 
-    int fileDescriptor;
+        int fileDescriptor;
 
-    bool isAuthenticated = false;
+        bool isAuthenticated = false;
 
-public:
-    Client(string id, int fileDescriptor);
+    public:
+        bool operator==(const Client& anotherClient) const;
 
-    const string& getId() const;
+        bool operator!=(const Client& anotherClient) const;
 
-    int getFileDescriptor() const;
+    public:
+        Client(string id, int fileDescriptor);
 
-    bool isAuthenticated1() const;
+        const string& getId() const;
 
-    void setIsAuthenticated(bool isAuthenticated);
+        int getFileDescriptor() const;
+
+        bool isAuthenticated1() const;
+
+        void setIsAuthenticated(bool isAuthenticated);
 
 };
 
