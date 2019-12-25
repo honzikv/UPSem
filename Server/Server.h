@@ -43,6 +43,8 @@ class Server {
 
         vector<shared_ptr<Lobby>> lobbies;
 
+        vector<thread> lobbyThreads;
+
         unique_ptr<MessageHandler> messageHandler;
 
         unordered_set<string> clientIds;

@@ -26,11 +26,11 @@ class TCPData {
     bool isEditable = true;
 
 public:
-    TCPData(DataType dataType) {
+    explicit TCPData(DataType dataType) {
         this->dataType = dataType;
     }
 
-    TCPData(const char* charArray) {
+    explicit TCPData(const char* charArray) {
         deserialize(charArray);
     }
 

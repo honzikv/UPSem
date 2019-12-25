@@ -33,3 +33,11 @@ bool Client::operator==(const Client& anotherClient) const {
 bool Client::operator!=(const Client& anotherClient) const {
     return !(anotherClient == *this);
 }
+
+bool Client::hasVoted() const {
+    return voted;
+}
+
+void Client::setHasVoted(bool hasVoted) {
+    Client::voted = hasVoted;
+}

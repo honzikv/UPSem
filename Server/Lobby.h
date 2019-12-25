@@ -9,7 +9,13 @@
 #include <cstdlib>
 #include <vector>
 #include <memory>
+#include <thread>
+#include <algorithm>
 #include "Client.h"
+#include "LobbyState.h"
+
+class Server;
+class LobbyMessageHandler;
 
 using namespace std;
 
@@ -23,6 +29,12 @@ class Lobby {
 
         const int id;
 
+        int votedToStart = 0;
+
+        LobbyState lobbyState = LOBBY_STATE_WAITING;
+
+        unique_ptr<LobbyMessageHandler> lobbyMessageHandler;
+
     public:
         Lobby(int limit, int id);
 
@@ -30,13 +42,15 @@ class Lobby {
 
         bool isJoinable() const;
 
-
         bool addClient(shared_ptr<Client>& client);
 
         int getClientCount();
 
         string getState();
 
+        void startThread(Lobby& lobby, Server& server);
+
+        void increaseHasVoted();
 };
 
 

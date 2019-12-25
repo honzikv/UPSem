@@ -23,8 +23,7 @@ void MessageHandler::handleSocketMessage(int clientSocket, TCPData& message) {
         if (request == RECONNECT) {
             if (!server.isLoginUnique(message.valueOf(LOGIN))) {
                 messageWriter->sendClientReconnected(clientSocket);
-            }
-            else {
+            } else {
                 messageWriter->sendClientNotFound(clientSocket);
             }
         }
@@ -35,33 +34,21 @@ void MessageHandler::handleSocketMessage(int clientSocket, TCPData& message) {
 }
 
 void MessageHandler::handleClientMessage(shared_ptr<Client>& client, TCPData& message) {
-
-    auto dataType = DATATYPE_REQUEST;
     try {
         auto dataTypeFieldValue = message.valueOf(DATA_TYPE);
         if (dataTypeFieldValue == PING) {
-            dataType = DATATYPE_PING;
+            pingBack(client);
         }
 
         if (dataTypeFieldValue == RESPONSE) {
-            dataType = DATATYPE_RESPONSE;
+            handleResponse(client, message);
+        } else {
+            handleRequest(client, message);
         }
     }
     catch (exception&) {
         server.kickClient(client);
     }
-
-    if (dataType == DATATYPE_REQUEST) {
-        handleRequest(client, message);
-        return;
-    }
-
-    if (dataType == DATATYPE_RESPONSE) {
-        handleResponse(client, message);
-        return;
-    }
-
-    pingBack(client);
 }
 
 void MessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& message) {

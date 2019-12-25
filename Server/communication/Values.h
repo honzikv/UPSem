@@ -13,5 +13,6 @@
 #define PING "ping"
 #define REQUEST "request"
 #define RESPONSE "response"
+#define VOTE_START "voteStart"
 
 #endif //UPSEM_VALUES_H

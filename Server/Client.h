@@ -19,7 +19,10 @@ class Client {
 
         bool isAuthenticated = false;
 
+        bool voted = false;
     public:
+        bool hasVoted() const;
+
         bool operator==(const Client& anotherClient) const;
 
         bool operator!=(const Client& anotherClient) const;
@@ -34,6 +37,8 @@ class Client {
         bool isAuthenticated1() const;
 
         void setIsAuthenticated(bool isAuthenticated);
+
+        void setHasVoted(bool hasVoted);
 
 };
 
