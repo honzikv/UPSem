@@ -7,6 +7,7 @@
 
 
 #include "Client.h"
+#include "Server.h"
 #include "serialization/TCPData.h"
 
 class Lobby;

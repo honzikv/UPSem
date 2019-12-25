@@ -3,6 +3,7 @@
 //
 
 #include "Server.h"
+#include "Lobby.h"
 #include "communication/MessageHandler.h"
 
 Server::Server(int port, int lobbyCount) {
@@ -28,9 +29,11 @@ Server::Server(int port, int lobbyCount) {
 
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
+        cout << i << endl;
     }
+    createThreads();
 
-    this->messageHandler = make_unique<MessageHandler>(*this);
+    this->messageHandler = make_shared<MessageHandler>(*this);
 }
 
 void Server::run() {
@@ -57,7 +60,7 @@ void Server::run() {
     //timeout klienta
     timeval timeout;
     timeout.tv_sec = 0;
-    timeout.tv_usec = 300;
+    timeout.tv_usec = 3000;
 
     while (true) {
         FD_ZERO(&readfds);
@@ -96,13 +99,25 @@ void Server::run() {
                 }
 
                 try {
-                    auto message = TCPData(buffer);
+                    auto message = make_shared<TCPData>(buffer);
                     auto client = getClient(clientSocket);
 
                     if (client == nullptr) {
                         messageHandler->handleSocketMessage(clientSocket, message);
                     } else {
 
+                        bool handledByLobby = false;
+                        for (auto const& lobby : lobbies) {
+                            if (lobby->contains(client)) {
+                                lobby->addNewMessage(message, client);
+                                handledByLobby = true;
+                                break;
+                            }
+                        }
+
+                        if (!handledByLobby) {
+                            messageHandler->handleClientMessage(client,message);
+                        }
                     }
 
                 }
@@ -135,13 +150,14 @@ void Server::setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescript
     }
 }
 
+
 void Server::kickClient(shared_ptr<Client>& client) {
 
 }
 
 const shared_ptr<Client>& Server::getClient(int socket) {
     for (const auto& clientPtr : clients) {
-        if (clientPtr->getFileDescriptor() == socket) {
+        if (clientPtr->getClientSocket() == socket) {
             return clientPtr;
         }
     }
@@ -159,23 +175,54 @@ const shared_ptr<Lobby>& Server::getLobby(int lobbyId) {
     return nullptr;
 }
 
-const vector<shared_ptr<Lobby>>& Server::getLobbies() const {
+const vector<shared_ptr<Lobby>>& Server::getLobbies() {
     return lobbies;
 }
 
-bool Server::isLoginUnique(string basicString) {
+bool Server::isLoginUnique(string username) {
+
+    for (const auto& client : clients) {
+        if (client->getId() == username) {
+            return true;
+        }
+    }
     return false;
+
 }
 
 bool Server::isLobbyJoinable(int lobbyId) {
 
-    for (auto lobby : lobbies) {
+    for (const auto& lobby : lobbies) {
         if (lobby->getId() == lobbyId) {
             return lobby->isJoinable();
         }
     }
     return false;
 }
+
+void lobbyFunction(shared_ptr<Lobby> lobby, Server& server) {
+
+    while (true) {
+
+
+        this_thread::sleep_for(chrono::milliseconds(LOBBY_THREAD_SLEEP_MS));
+    }
+}
+
+void Server::createThreads() {
+
+    auto& server = *this;
+    for (const auto& lobbySharedPtr : lobbies) {
+        auto lobbyThread = thread(lobbyFunction, lobbySharedPtr, ref(server));
+        lobbyThread.detach();
+        lobbyThreads.push_back(move(lobbyThread));
+    }
+}
+
+int Server::getMasterSocket() const {
+    return masterSocket;
+}
+
 
 
 

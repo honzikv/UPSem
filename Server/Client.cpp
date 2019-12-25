@@ -6,28 +6,19 @@
 
 #include <utility>
 
-Client::Client(string id, int fileDescriptor) : id(std::move(id)), fileDescriptor(fileDescriptor) {}
+Client::Client(string id, int fileDescriptor) : id(std::move(id)), clientSocket(fileDescriptor) {}
 
 const string& Client::getId() const {
     return id;
 }
 
-int Client::getFileDescriptor() const {
-    return fileDescriptor;
-}
-
-bool Client::isAuthenticated1() const {
-    return isAuthenticated;
-}
-
-void Client::setIsAuthenticated(bool authenticated) {
-    Client::isAuthenticated = authenticated;
+int Client::getClientSocket() const {
+    return clientSocket;
 }
 
 bool Client::operator==(const Client& anotherClient) const {
     return id == anotherClient.id &&
-           fileDescriptor == anotherClient.fileDescriptor &&
-           isAuthenticated == anotherClient.isAuthenticated;
+           clientSocket == anotherClient.clientSocket;
 }
 
 bool Client::operator!=(const Client& anotherClient) const {

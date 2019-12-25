@@ -9,19 +9,20 @@ MessageHandler::MessageHandler(Server& server) : server(server) {
     this->messageWriter = make_unique<MessageWriter>(server);
 }
 
-void MessageHandler::handleSocketMessage(int clientSocket, TCPData& message) {
+void MessageHandler::handleSocketMessage(int clientSocket, shared_ptr<TCPData>& message) {
 
     try {
-        auto request = message.valueOf(REQUEST);
+        auto request = message->valueOf(REQUEST);
 
         if (request == LOGIN) {
             messageWriter->sendUsernameUnique(
-                    clientSocket, server.isLoginUnique(message.valueOf(LOGIN)));
+                    clientSocket, server.isLoginUnique(message->valueOf(LOGIN)));
             return;
         }
 
         if (request == RECONNECT) {
-            if (!server.isLoginUnique(message.valueOf(LOGIN))) {
+            if (!server.isLoginUnique(message->valueOf(LOGIN))) {
+                //todo actually reconnect the fucker
                 messageWriter->sendClientReconnected(clientSocket);
             } else {
                 messageWriter->sendClientNotFound(clientSocket);
@@ -33,9 +34,9 @@ void MessageHandler::handleSocketMessage(int clientSocket, TCPData& message) {
     }
 }
 
-void MessageHandler::handleClientMessage(shared_ptr<Client>& client, TCPData& message) {
+void MessageHandler::handleClientMessage(shared_ptr<Client>& client, shared_ptr<TCPData>& message) {
     try {
-        auto dataTypeFieldValue = message.valueOf(DATA_TYPE);
+        auto dataTypeFieldValue = message->valueOf(DATA_TYPE);
         if (dataTypeFieldValue == PING) {
             pingBack(client);
         }
@@ -51,9 +52,9 @@ void MessageHandler::handleClientMessage(shared_ptr<Client>& client, TCPData& me
     }
 }
 
-void MessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& message) {
+void MessageHandler::handleRequest(shared_ptr<Client>& client, shared_ptr<TCPData>& message) {
     try {
-        auto request = message.valueOf(REQUEST);
+        auto request = message->valueOf(REQUEST);
 
         if (request == LOBBY_LIST) {
             messageWriter->sendLobbyList(client);
@@ -61,7 +62,7 @@ void MessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& message)
         }
 
         if (request == JOIN_LOBBY) {
-            auto lobbyId = stoi(message.valueOf(LOBBY_ID));
+            auto lobbyId = stoi(message->valueOf(LOBBY_ID));
             auto isJoinable = server.isLobbyJoinable(lobbyId);
 
             if (isJoinable) {
@@ -77,7 +78,7 @@ void MessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& message)
     }
 }
 
-void MessageHandler::handleResponse(shared_ptr<Client>& client, TCPData& data) {
+void MessageHandler::handleResponse(shared_ptr<Client>& client, shared_ptr<TCPData>& message) {
 
 }
 

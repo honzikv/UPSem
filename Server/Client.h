@@ -13,13 +13,27 @@ using namespace std;
 
 class Client {
 
-        string id;
+        /**
+         * Id klienta, tzn. jeho username
+         */
+        const string id;
 
-        int fileDescriptor;
+        /**
+         * Cislo socketu klienta
+         */
+        int clientSocket;
 
-        bool isAuthenticated = false;
-
+        /**
+         * Flag, zda-li uzivatel volil pro start hry, pokud alespon 50% uzivatelu volilo pro start lobby automaticky
+         * spusti hru
+         */
         bool voted = false;
+
+        /**
+         * Flag pro server pro zjisteni, zda-li ma s klientem komunikovat
+         */
+        bool isInLobby = false;
+
     public:
         bool hasVoted() const;
 
@@ -32,11 +46,7 @@ class Client {
 
         const string& getId() const;
 
-        int getFileDescriptor() const;
-
-        bool isAuthenticated1() const;
-
-        void setIsAuthenticated(bool isAuthenticated);
+        int getClientSocket() const;
 
         void setHasVoted(bool hasVoted);
 

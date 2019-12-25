@@ -15,6 +15,7 @@ void MessageWriter::sendUsernameUnique(int clientSocket, bool isUnique) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, LOGIN);
     message.add(IS_UNIQUE, isUnique ? TRUE : FALSE);
+
     sendMessage(clientSocket, message.serialize());
 }
 
@@ -25,16 +26,31 @@ void MessageWriter::sendLobbyList(shared_ptr<Client>& client) {
         message.add("lobby" + to_string(lobby->getId()), lobby->getState());
     }
 
-    sendMessage(client->getFileDescriptor(), message.serialize());
+    sendMessage(client->getClientSocket(), message.serialize());
 }
 
 void MessageWriter::sendLobbyJoinable(shared_ptr<Client>& client, bool isJoinable, int lobbyId) {
-
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, JOIN_LOBBY);
     message.add(IS_JOINABLE, isJoinable ? TRUE : FALSE);
     message.add(LOBBY_ID, to_string(lobbyId));
 
-    sendMessage(client->getFileDescriptor(), message.serialize());
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void MessageWriter::sendClientNotFound(int clientSocket) {
+    auto message = TCPData(DATATYPE_RESPONSE);
+    message.add(RESPONSE, RECONNECT);
+    message.add(RECONNECTED, FALSE);
+
+    sendMessage(clientSocket, message.serialize());
+}
+
+void MessageWriter::sendClientReconnected(int clientSocket) {
+    auto message = TCPData(DATATYPE_RESPONSE);
+    message.add(RESPONSE, RECONNECT);
+    message.add(RECONNECTED, TRUE);
+
+    sendMessage(clientSocket, message.serialize());
 }
 

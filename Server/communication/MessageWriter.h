@@ -28,8 +28,11 @@ class MessageWriter {
 
         void sendLobbyList(shared_ptr<Client>& client);
 
-        void sendLobbyJoinable(shared_ptr<Client>& client, bool isJoinable, int lobbyId);
+        static void sendLobbyJoinable(shared_ptr<Client>& client, bool isJoinable, int lobbyId);
 
+        static void sendClientNotFound(int clientSocket);
+
+        static void sendClientReconnected(int clientSocket);
 };
 
 

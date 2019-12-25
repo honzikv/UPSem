@@ -46,13 +46,17 @@ void LobbyMessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& mes
         if (request == message.valueOf(VOTE_START)) {
             if (!client->hasVoted()) {
                 client->setHasVoted(true);
-                lobby->
             }
         }
     }
+    catch (exception&) {}
 
 }
 
 LobbyMessageHandler::LobbyMessageHandler(Lobby& lobby) : lobby(lobby) {
+}
+
+void LobbyMessageHandler::pingBack(shared_ptr<Client>& sharedPtr) {
+
 }
 

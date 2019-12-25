@@ -24,6 +24,8 @@
 
 using namespace std;
 
+class Lobby;
+
 class Server {
 
         /**
@@ -32,7 +34,7 @@ class Server {
         int masterSocket;
 
         /**
-         * info o adrese
+         * Info o adrese
          */
         sockaddr_in address;
 
@@ -41,16 +43,25 @@ class Server {
          */
         vector<shared_ptr<Client>> clients;
 
+        /**
+         * Seznam vsech lobby
+         */
         vector<shared_ptr<Lobby>> lobbies;
 
+        /**
+         * Seznam vsech vlaken
+         */
         vector<thread> lobbyThreads;
 
-        unique_ptr<MessageHandler> messageHandler;
-
-        unordered_set<string> clientIds;
+        /**
+         *
+         */
+        shared_ptr<MessageHandler> messageHandler;
 
     public:
         Server(int port, int lobbyCount);
+
+        int getMasterSocket() const;
 
         void run();
 
@@ -62,11 +73,14 @@ class Server {
 
         const shared_ptr<Lobby>& getLobby(int lobbyId);
 
-        const vector<shared_ptr<Lobby>>& getLobbies() const;
+        const vector<shared_ptr<Lobby>>& getLobbies();
 
-        bool isLoginUnique(string basicString);
+        bool isLoginUnique(string username);
 
         bool isLobbyJoinable(int lobbyId);
+
+        void createThreads();
+
 };
 
 #endif

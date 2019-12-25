@@ -14,5 +14,6 @@
 #define DATA_TYPE "dataType"
 #define LOBBY_ID "lobbyId"
 #define RECONNECT "reconnect"
+#define RECONNECTED "reconnected"
 
 #endif //UPSEM_FIELDS_H

@@ -18,13 +18,13 @@ class MessageHandler {
     public:
         explicit MessageHandler(Server& server);
 
-        void handleSocketMessage(int clientSocket, TCPData& message);
+        void handleSocketMessage(int clientSocket, shared_ptr<TCPData>& message);
 
-        void handleClientMessage(shared_ptr<Client>& client, TCPData& message);
+        void handleClientMessage(shared_ptr<Client>& client, shared_ptr<TCPData>& message);
 
-        void handleRequest(shared_ptr<Client>& client, TCPData& message);
+        void handleRequest(shared_ptr<Client>& client, shared_ptr<TCPData>& message);
 
-        void handleResponse(shared_ptr<Client>& sharedPtr, TCPData& data);
+        void handleResponse(shared_ptr<Client>& sharedPtr, shared_ptr<TCPData>& message);
 
         void pingBack(shared_ptr<Client>& sharedPtr);
 };
