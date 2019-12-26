@@ -17,14 +17,15 @@
 #include <algorithm>
 #include <memory>
 #include "Client.h"
-#include "Lobby.h"
+#include "lobby/Lobby.h"
 #include "communication/Constants.h"
 #include "serialization/TCPData.h"
-#include "communication/MessageHandler.h"
 
 using namespace std;
 
 class Lobby;
+
+class MessageHandler;
 
 class Server {
 
@@ -67,11 +68,11 @@ class Server {
 
         void setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescriptorSet, int& maxSocket) const;
 
-        void kickClient(shared_ptr<Client>& client);
+        void kickClient(shared_ptr<Client> client);
 
-        const shared_ptr<Client>& getClient(int socket);
+        shared_ptr<Client> getClient(int socket);
 
-        const shared_ptr<Lobby>& getLobby(int lobbyId);
+        shared_ptr<Lobby> getLobby(int lobbyId);
 
         const vector<shared_ptr<Lobby>>& getLobbies();
 
@@ -81,6 +82,7 @@ class Server {
 
         void createThreads();
 
+        void addClient(const string& username, int clientSocket);
 };
 
 #endif

@@ -65,6 +65,7 @@ public:
         data.append("}\n");
 
         isEditable = false;
+        cout << data;
         return data;
     }
 

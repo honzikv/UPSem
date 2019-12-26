@@ -4,21 +4,20 @@
 
 #include "LobbyMessageHandler.h"
 #include "Lobby.h"
-#include "communication/Fields.h"
-#include "communication/Values.h"
+#include "../communication/Fields.h"
+#include "../communication/Values.h"
 
-void LobbyMessageHandler::handleMessage(shared_ptr<Client>& client, TCPData& message) {
+void LobbyMessageHandler::handleMessage(shared_ptr<Client>& client, shared_ptr<TCPData>& message) {
 
     try {
-        auto dataTypeFieldValue = message.valueOf(DATA_TYPE);
+        auto dataTypeFieldValue = message->valueOf(DATA_TYPE);
         if (dataTypeFieldValue == PING) {
-            pingBack(client);
+            //todo ping back
         }
 
         if (dataTypeFieldValue == RESPONSE) {
             handleResponse(client, message);
-        }
-        else {
+        } else {
             handleRequest(client, message);
         }
     }
@@ -29,9 +28,9 @@ void LobbyMessageHandler::handleMessage(shared_ptr<Client>& client, TCPData& mes
 
 }
 
-void LobbyMessageHandler::handleResponse(shared_ptr<Client>& client, TCPData& message) {
+void LobbyMessageHandler::handleResponse(shared_ptr<Client>& client, shared_ptr<TCPData>& message) {
     try {
-        auto response = message.valueOf(RESPONSE);
+        auto response = message->valueOf(RESPONSE);
 
     }
     catch (exception&) {
@@ -39,11 +38,11 @@ void LobbyMessageHandler::handleResponse(shared_ptr<Client>& client, TCPData& me
     }
 }
 
-void LobbyMessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& message) {
+void LobbyMessageHandler::handleRequest(shared_ptr<Client>& client, shared_ptr<TCPData>& message) {
     try {
-        auto request = message.valueOf(REQUEST);
+        auto request = message->valueOf(REQUEST);
 
-        if (request == message.valueOf(VOTE_START)) {
+        if (request == message->valueOf(VOTE_START)) {
             if (!client->hasVoted()) {
                 client->setHasVoted(true);
             }
@@ -56,7 +55,4 @@ void LobbyMessageHandler::handleRequest(shared_ptr<Client>& client, TCPData& mes
 LobbyMessageHandler::LobbyMessageHandler(Lobby& lobby) : lobby(lobby) {
 }
 
-void LobbyMessageHandler::pingBack(shared_ptr<Client>& sharedPtr) {
-
-}
 

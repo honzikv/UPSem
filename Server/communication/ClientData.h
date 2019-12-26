@@ -24,6 +24,7 @@ class ClientData {
         const shared_ptr<TCPData>& getMessage() const;
 
         const shared_ptr<Client>& getClient() const;
+
 };
 
 

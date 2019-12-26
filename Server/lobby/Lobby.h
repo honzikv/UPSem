@@ -12,10 +12,10 @@
 #include <thread>
 #include <algorithm>
 #include <atomic>
-#include "Client.h"
+#include "../Client.h"
 #include "LobbyState.h"
-#include "serialization/TCPData.h"
-#include "communication/ClientData.h"
+#include "../serialization/TCPData.h"
+#include "../communication/ClientData.h"
 
 class Server;
 

@@ -16,3 +16,5 @@ const shared_ptr<TCPData>& ClientData::getMessage() const {
 const shared_ptr<Client>& ClientData::getClient() const {
     return client;
 }
+
+

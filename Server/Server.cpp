@@ -3,7 +3,7 @@
 //
 
 #include "Server.h"
-#include "Lobby.h"
+#include "lobby/Lobby.h"
 #include "communication/MessageHandler.h"
 
 Server::Server(int port, int lobbyCount) {
@@ -68,7 +68,7 @@ void Server::run() {
         maxSocket = masterSocket;
 
         setMaxSocket(clientSockets, readfds, maxSocket);
-        auto activity = select(maxSocket + 1, &readfds, NULL, NULL, &timeout);
+        auto activity = select(maxSocket + 1, &readfds, NULL, NULL, NULL);
 
         if (FD_ISSET(masterSocket, &readfds)) {
             int newClient = accept(masterSocket, (struct sockaddr*) &address, (socklen_t*) &addrlen);
@@ -99,6 +99,7 @@ void Server::run() {
                 }
 
                 try {
+                    cout << buffer << "\n";
                     auto message = make_shared<TCPData>(buffer);
                     auto client = getClient(clientSocket);
 
@@ -116,7 +117,7 @@ void Server::run() {
                         }
 
                         if (!handledByLobby) {
-                            messageHandler->handleClientMessage(client,message);
+                            messageHandler->handleClientMessage(client, message);
                         }
                     }
 
@@ -151,28 +152,28 @@ void Server::setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescript
 }
 
 
-void Server::kickClient(shared_ptr<Client>& client) {
+void Server::kickClient(shared_ptr<Client> client) {
 
 }
 
-const shared_ptr<Client>& Server::getClient(int socket) {
-    for (const auto& clientPtr : clients) {
-        if (clientPtr->getClientSocket() == socket) {
-            return clientPtr;
+shared_ptr<Client> Server::getClient(int socket) {
+    for (const auto& client : clients) {
+        if (client->getClientSocket() == socket) {
+            return client;
         }
     }
 
-    return nullptr;
+    return shared_ptr<Client>(nullptr);
 }
 
-const shared_ptr<Lobby>& Server::getLobby(int lobbyId) {
+shared_ptr<Lobby> Server::getLobby(int lobbyId) {
     for (const auto& lobbyPtr : lobbies) {
         if (lobbyPtr->getId() == lobbyId) {
             return lobbyPtr;
         }
     }
 
-    return nullptr;
+    return shared_ptr<Lobby>(nullptr);
 }
 
 const vector<shared_ptr<Lobby>>& Server::getLobbies() {
@@ -183,10 +184,10 @@ bool Server::isLoginUnique(string username) {
 
     for (const auto& client : clients) {
         if (client->getId() == username) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 
 }
 
@@ -221,6 +222,10 @@ void Server::createThreads() {
 
 int Server::getMasterSocket() const {
     return masterSocket;
+}
+
+void Server::addClient(const string& username, int clientSocket) {
+    clients.push_back(make_unique<Client>(username,clientSocket));
 }
 
 
