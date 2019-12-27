@@ -88,6 +88,8 @@ class Lobby {
         bool contains(shared_ptr<Client>& client);
 
         void addNewMessage(shared_ptr<TCPData>& message, shared_ptr<Client>& client);
+
+        const vector<shared_ptr<Client>>& getClients() const;
 };
 
 

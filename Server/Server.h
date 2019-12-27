@@ -8,11 +8,14 @@
 #include <iostream>
 #include <cstring>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <cstdlib>
 #include <vector>
 #include <unistd.h>
 #include <cstdio>
+#include <sys/select.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <unordered_set>
 #include <algorithm>
 #include <memory>
@@ -32,12 +35,27 @@ class Server {
         /**
          * Master socket pro select()
          */
-        int masterSocket;
+        int serverSocketFileDescriptor;
 
         /**
-         * Info o adrese
+         * Port serveru
          */
-        sockaddr_in address;
+        int port;
+
+        /**
+         * Info o adrese serveru
+         */
+        struct sockaddr_in address;
+
+        /**
+         * Info o adrese klienta pro select
+         */
+        struct sockaddr_in clientAddress;
+
+        /**
+         * Set vsech file descriptoru
+         */
+        fd_set fileDescriptorSet;
 
         /**
          * Seznam vsech klientu
@@ -54,6 +72,8 @@ class Server {
          */
         vector<thread> lobbyThreads;
 
+        vector<int> clientSockets;
+
         /**
          *
          */
@@ -62,11 +82,9 @@ class Server {
     public:
         Server(int port, int lobbyCount);
 
-        int getMasterSocket() const;
+        void init();
 
-        void run();
-
-        void setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescriptorSet, int& maxSocket) const;
+        void launch();
 
         void kickClient(shared_ptr<Client> client);
 
@@ -83,6 +101,8 @@ class Server {
         void createThreads();
 
         void addClient(const string& username, int clientSocket);
+
+        void selectServer();
 };
 
 #endif

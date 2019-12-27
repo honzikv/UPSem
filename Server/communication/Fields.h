@@ -15,5 +15,6 @@
 #define LOBBY_ID "lobbyId"
 #define RECONNECT "reconnect"
 #define RECONNECTED "reconnected"
+#define CLIENT "client"
 
 #endif //UPSEM_FIELDS_H

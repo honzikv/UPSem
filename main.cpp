@@ -2,6 +2,5 @@
 
 int main() {
 
-    auto server = make_shared<Server>(44312, 10);
-    server->run();
+    auto server = make_shared<Server>(4422, 5);
 }

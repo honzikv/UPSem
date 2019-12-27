@@ -48,3 +48,7 @@ bool Lobby::contains(shared_ptr<Client>& client) {
 void Lobby::addNewMessage(shared_ptr<TCPData>& message, shared_ptr<Client>& client) {
     unprocessedMessages.emplace_back(make_shared<ClientData>(message, client));
 }
+
+const vector<shared_ptr<Client>>& Lobby::getClients() const {
+    return clients;
+}

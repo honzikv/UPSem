@@ -6,147 +6,156 @@
 #include "lobby/Lobby.h"
 #include "communication/MessageHandler.h"
 
-Server::Server(int port, int lobbyCount) {
-
-    //Nastaveni filedescriptoru socketu serveru
-    if ((masterSocket = socket(AF_INET, SOCK_STREAM, 0)) <= 0) {
-        cerr << "Error, OS could not create socket for the Server, try again" << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    //Nastaveni adresy serveru
-    memset(&address, 0, sizeof(address));
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons(port);
-
-    //bind socketu
-    if (bind(masterSocket, (struct sockaddr*) &address, sizeof(address)) < 0) {
-        cerr << "Error, OS could not bind socket, try again" << endl;
-        exit(EXIT_FAILURE);
-    }
-    cout << "Successfully bound socket to the server, ready to run." << endl;
+Server::Server(int port, int lobbyCount) : port(port) {
 
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
-        cout << i << endl;
     }
     createThreads();
 
     this->messageHandler = make_shared<MessageHandler>(*this);
+    selectServer();
 }
 
-void Server::run() {
 
-    if (listen(masterSocket, 3) < 0) {
-        cerr << "Error while listening on server socket " << endl;
+void Server::selectServer() {
+
+    //create a master socket
+    if ((serverSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        cerr << "Initializing socket failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
 
+    auto opt = 1;
+    //nastaveni socketu aby prijmal vice spojeni
+    if (setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, (char*) &opt,
+                   sizeof(opt)) < 0) {
+        cerr << "Setting socket option failed, please try again later" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    //bind na port
+    if (bind(serverSocketFileDescriptor, (struct sockaddr*) &address, sizeof(address)) < 0) {
+        cerr << "Bind failed, please try again later" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+
+    if (listen(serverSocketFileDescriptor, 3) < 0) {
+        cerr << "Listen failed, please try again later" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    //accept the incoming connection
     int addrlen = sizeof(address);
+    auto maxSocket = -1;
+    timeval timeout;
 
-    //filedeskriptory socketu
-    fd_set readfds;
-
-    //maximalni socket
-    auto maxSocket = 0;
-
-    //list se sockety klientu
-    auto clientSockets = vector<int>();
-
-    //buffer pro přečtenou zprávu
+    //buffer pro zpravy
     char buffer[MAX_BUFFER_SIZE_BYTES];
 
-    //timeout klienta
-    timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 3000;
-
     while (true) {
-        FD_ZERO(&readfds);
-        FD_SET(masterSocket, &readfds);
-        maxSocket = masterSocket;
+        //vynulovani filedescriptor setu
+        FD_ZERO(&fileDescriptorSet);
 
-        setMaxSocket(clientSockets, readfds, maxSocket);
-        auto activity = select(maxSocket + 1, &readfds, NULL, NULL, NULL);
+        //pridani socketu serveru do filedescriptor setu
+        FD_SET(serverSocketFileDescriptor, &fileDescriptorSet);
+        maxSocket = serverSocketFileDescriptor;
 
-        if (FD_ISSET(masterSocket, &readfds)) {
-            int newClient = accept(masterSocket, (struct sockaddr*) &address, (socklen_t*) &addrlen);
+        for (const auto& clientSocket : clientSockets) {
+            FD_SET(clientSocket,&fileDescriptorSet);
 
-            if (newClient < 0) {
-                cerr << "Error while accepting client" << endl;
-                exit(EXIT_FAILURE);
+            if (clientSocket > maxSocket) {
+                maxSocket = clientSocket;
             }
-
-            cout << "New client connected" << endl; //todo log
-            clientSockets.push_back(newClient);
         }
 
-            //Iterace pres vsechny klientske sockety
-        else {
-            for (auto i = clientSockets.begin(); i != clientSockets.end(); i++) {
-                //ziskani reference
-                auto clientSocket = i.operator*();
+        //nastaveni timeoutu
+        timeout.tv_sec = 600;
+        timeout.tv_usec = 0;
+
+        auto activity = select(maxSocket + 1, &fileDescriptorSet, NULL, NULL, &timeout);
+
+        if ((activity < 0)) {
+            cerr << "Select error, please try again later" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        //Pokud je neco na server socketu, jedna se o novy pokus o pripojeni
+        if (FD_ISSET(serverSocketFileDescriptor, &fileDescriptorSet)) {
+            auto acceptResult = accept(serverSocketFileDescriptor, (sockaddr*) &clientAddress,
+                                       (socklen_t*) &addrlen);
+
+            if (acceptResult < 0) {
+                cerr << "Error while accepting client" << endl;
+            } else {
+                cout << "New connection from "
+                << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
+                clientSockets.push_back(acceptResult);
+            }
+        }
+
+        //Iterujeme kazdy socket klienta, jestli je co cist
+        auto iterator = 0;
+        while (iterator < clientSockets.size()) {
+            auto clientSocket = clientSockets[iterator];
+            if (FD_ISSET(clientSocket, &fileDescriptorSet)) {
 
                 memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
-                auto bytesRead = read(clientSocket, buffer, MAX_BUFFER_SIZE_BYTES);
+                auto readResult = read(clientSocket, buffer, MAX_BUFFER_SIZE_BYTES);
 
-                if (bytesRead <= 0) {
-                    cout << "client disconnected" << endl;
-                    i = clientSockets.erase(i);
+                if (readResult == 0) {
+                    cerr << "Client was disconnected" << endl;
                     close(clientSocket);
+                    clientSockets.erase(clientSockets.begin() + iterator);
                     continue;
-                }
+                } else {
+                    try {
+                        cout << buffer;
+                        auto message = make_shared<TCPData>(buffer);
+                        auto client = getClient(clientSocket);
 
-                try {
-                    cout << buffer << "\n";
-                    auto message = make_shared<TCPData>(buffer);
-                    auto client = getClient(clientSocket);
+                        if (client == nullptr) {
+                            auto isLoggedIn = messageHandler->handleLogin(clientSocket, message);
 
-                    if (client == nullptr) {
-                        messageHandler->handleSocketMessage(clientSocket, message);
-                    } else {
+                            if (!isLoggedIn) {
+                                close(clientSocket);
+                                clientSockets.erase(clientSockets.begin() + iterator);
+                                continue;
+                            }
 
-                        bool handledByLobby = false;
-                        for (auto const& lobby : lobbies) {
-                            if (lobby->contains(client)) {
-                                lobby->addNewMessage(message, client);
-                                handledByLobby = true;
-                                break;
+                        } else {
+
+                            bool handledByLobby = false;
+                            for (auto const& lobby : lobbies) {
+                                if (lobby->contains(client)) {
+                                    lobby->addNewMessage(message, client);
+                                    handledByLobby = true;
+                                    break;
+                                }
+                            }
+
+                            if (!handledByLobby) {
+                                messageHandler->handleClientMessage(client, message);
                             }
                         }
 
-                        if (!handledByLobby) {
-                            messageHandler->handleClientMessage(client, message);
-                        }
                     }
-
-                }
-                catch (exception&) {
-                    cerr << "client send incorrect input, disconnecting" << endl;
-                    i = clientSockets.erase(i);
-                    close(clientSocket);
+                    catch (exception&) {
+                        cerr << "client sent incorrect input, disconnecting" << endl;
+                        close(clientSocket);
+                        clientSockets.erase(clientSockets.begin() + iterator);
+                        continue;
+                    }
                 }
             }
 
-        }
-    }
-}
-
-/**
- * Nastaví maximální socket
- * @param clientSockets vektor se sockety klientů
- * @param fileDescriptorSet set file descriptorů
- * @param maxSocket reference na maximální socket
- */
-void Server::setMaxSocket(const vector<int>& clientSockets, fd_set& fileDescriptorSet, int& maxSocket) const {
-    for (const auto& clientSocket : clientSockets) {
-        if (clientSocket > maxSocket) {
-            maxSocket = clientSocket;
-        }
-
-        if (clientSocket > 0) {
-            FD_SET(clientSocket, &fileDescriptorSet);
+            iterator++;
         }
     }
 }
@@ -220,15 +229,143 @@ void Server::createThreads() {
     }
 }
 
-int Server::getMasterSocket() const {
-    return masterSocket;
-}
-
 void Server::addClient(const string& username, int clientSocket) {
-    clients.push_back(make_unique<Client>(username,clientSocket));
+    clients.push_back(make_unique<Client>(username, clientSocket));
 }
 
+void Server::init() {
+
+    serverSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocketFileDescriptor == -1) {
+        cerr << "Creating socket failed, please try to restart program with different port" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    auto socketOption = 1;
+    auto socketOpResult = setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &socketOption,
+                                     sizeof(socketOption));
+    if (socketOpResult == -1) {
+        cerr << "Error setting socket option, please try again with different port" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(port);
+
+    auto bindResult = bind(serverSocketFileDescriptor, (struct sockaddr*) &address, sizeof(address));
+    if (bindResult == -1) {
+        cerr << "Error while binding socket, please try again with different port" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    auto listenResult = listen(serverSocketFileDescriptor, 3);
+    if (listenResult == -1) {
+        cerr << "Error while listening" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+}
+
+void Server::launch() {
+
+    timeval timeout;
+    FD_ZERO(&fileDescriptorSet);
+    FD_SET(serverSocketFileDescriptor, &fileDescriptorSet);
+
+    auto maxSocket = serverSocketFileDescriptor;
+    int addrlen = sizeof(clientAddress);
+    auto clientSockets = vector<int>();
+
+    char buffer[MAX_BUFFER_SIZE_BYTES];
+
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    for (const auto& clientSocket : clientSockets) {
+        if (clientSocket > maxSocket) {
+            maxSocket = clientSocket;
+        }
+
+        if (clientSocket > 0) {
+            FD_SET(clientSocket, &fileDescriptorSet);
+        }
+    }
+
+    auto activity = select(maxSocket + 1, &fileDescriptorSet, NULL, NULL, &timeout);
+
+    if ((activity < 0) && (errno != EINTR)) {
+        cerr << "Error in select function" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (FD_ISSET(maxSocket, &fileDescriptorSet)) {
+        auto newSocket = -1;
+        if ((newSocket = accept(serverSocketFileDescriptor, (struct sockaddr*) &clientAddress,
+                                (socklen_t*) &addrlen)) <
+            0) {
+            cerr << "Error while accepting client" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        cout << "New client connected" << endl;
+        clientSockets.push_back(newSocket);
+    }
+
+    auto iterator = clientSockets.begin();
+    while (iterator != clientSockets.end()) {
+        auto clientSocket = *iterator;
+
+        //Pokud je filedescriptor nastaveny, precteme data
+        if (FD_ISSET(clientSocket, &fileDescriptorSet)) {
+
+            cout << "read some stuff" << endl;
+            memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
+            auto bytesRead = read(clientSocket, buffer, MAX_BUFFER_SIZE_BYTES);
+
+            if (bytesRead <= 0) {
+                cout << "client disconnected" << endl;
+                iterator = clientSockets.erase(iterator);
+                close(clientSocket);
+                iterator++;
+                continue;
+            }
+
+            try {
+                auto message = make_shared<TCPData>(buffer);
+                auto client = getClient(clientSocket);
+
+                if (client == nullptr) {
+                    messageHandler->handleLogin(clientSocket, message);
+                } else {
+
+                    bool handledByLobby = false;
+                    for (auto const& lobby : lobbies) {
+                        if (lobby->contains(client)) {
+                            lobby->addNewMessage(message, client);
+                            handledByLobby = true;
+                            break;
+                        }
+                    }
+
+                    if (!handledByLobby) {
+                        messageHandler->handleClientMessage(client, message);
+                    }
+                }
+
+            }
+            catch (exception&) {
+                cerr << "client sent incorrect input, disconnecting" << endl;
+                iterator = clientSockets.erase(iterator);
+                close(clientSocket);
+            }
+        }
+
+        iterator++;
+    }
 
 
+}
 
 

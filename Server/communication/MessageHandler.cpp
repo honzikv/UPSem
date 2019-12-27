@@ -9,7 +9,7 @@
 
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
-void MessageHandler::handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message) {
+bool MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& message) {
     try {
         auto request = message->valueOf(REQUEST);
 
@@ -17,18 +17,20 @@ void MessageHandler::handleSocketMessage(int clientSocket, const shared_ptr<TCPD
             if (server.isLoginUnique(message->valueOf(USERNAME))) {
                 server.addClient(message->valueOf(USERNAME), clientSocket);
                 sendUsernameUnique(clientSocket, true);
+                return true;
             }
             sendUsernameUnique(clientSocket, false);
-            return;
+            return false;
         }
 
         if (request == RECONNECT) {
             if (!server.isLoginUnique(message->valueOf(LOGIN))) {
                 //todo actually reconnect the fucker
                 sendClientReconnected(clientSocket);
-            } else {
-                sendClientNotFound(clientSocket);
+                return true;
             }
+            sendClientNotFound(clientSocket);
+            return false;
         }
     }
     catch (exception& ex) {
@@ -72,6 +74,7 @@ void MessageHandler::handleClientRequest(const shared_ptr<Client>& client, const
             if (isJoinable) {
                 server.getLobby(lobbyId)->addClient(client);
                 sendLobbyJoinable(client, true, lobbyId);
+                sendLobbyInfo(client, server.getLobby(lobbyId));
             }
         }
     }
@@ -135,4 +138,17 @@ void MessageHandler::sendClientReconnected(int clientSocket) {
     message.add(RECONNECTED, TRUE);
 
     sendMessage(clientSocket, message.serialize());
+}
+
+void MessageHandler::sendLobbyInfo(const shared_ptr<Client>& client, const shared_ptr<Lobby>& lobby) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, UPDATE_PLAYER_LIST);
+
+    //Cislo klienta
+    auto clientNo = 0;
+    for (const auto& currentClient : lobby->getClients()) {
+        message.add(CLIENT + to_string(clientNo), currentClient->getId());
+    }
+
+    sendMessage(client->getClientSocket(), message.serialize());
 }

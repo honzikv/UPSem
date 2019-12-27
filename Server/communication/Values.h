@@ -14,5 +14,6 @@
 #define REQUEST "request"
 #define RESPONSE "response"
 #define VOTE_START "voteStart"
+#define UPDATE_PLAYER_LIST "updatePlayerList"
 
 #endif //UPSEM_VALUES_H

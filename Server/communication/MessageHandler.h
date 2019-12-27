@@ -7,6 +7,7 @@
 
 #include "../serialization/TCPData.h"
 #include "../Client.h"
+#include "../lobby/Lobby.h"
 
 class Server;
 
@@ -22,11 +23,15 @@ class MessageHandler {
     public:
         explicit MessageHandler(Server& server);
 
-        void handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message);
-
+        /**
+         * Funkce pro prihlaseni klienta - reconnect a login.
+         * @param clientSocket socket klienta
+         * @param message zprava
+         * @return vraci true, pokud byl klient uspesne pripojen, jinak se spojeni zavre
+         */
+        bool handleLogin(int clientSocket, const shared_ptr<TCPData>& message);
 
         void handleClientMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
-
 
     private:
         void handleClientRequest(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
@@ -48,6 +53,7 @@ class MessageHandler {
         static void sendClientReconnected(int clientSocket);
 
 
+        void sendLobbyInfo(const shared_ptr<Client>& client, const shared_ptr<Lobby>& lobby);
 };
 
 
