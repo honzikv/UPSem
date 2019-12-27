@@ -29,7 +29,7 @@ class MessageHandler {
          * @param message zprava
          * @return vraci true, pokud byl klient uspesne pripojen, jinak se spojeni zavre
          */
-        bool handleLogin(int clientSocket, const shared_ptr<TCPData>& message);
+        bool handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message);
 
         void handleClientMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
 
@@ -37,6 +37,8 @@ class MessageHandler {
         void handleClientRequest(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
 
         void handleClientResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
+
+        static void pingBack(int clientSocket);
 
         static void pingBack(const shared_ptr<Client>& client);
 
@@ -51,7 +53,6 @@ class MessageHandler {
         static void sendClientNotFound(int clientSocket);
 
         static void sendClientReconnected(int clientSocket);
-
 
         void sendLobbyInfo(const shared_ptr<Client>& client, const shared_ptr<Lobby>& lobby);
 };

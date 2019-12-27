@@ -5,6 +5,7 @@
 #ifndef UPSEM_FIELDS_H
 #define UPSEM_FIELDS_H
 
+#define DATATYPE "dataType"
 #define REQUEST "request"
 #define RESPONSE "response"
 #define USERNAME "username"

@@ -59,6 +59,7 @@ void Server::selectServer() {
     //buffer pro zpravy
     char buffer[MAX_BUFFER_SIZE_BYTES];
 
+    cout << "Server is ready to handle clients " << endl;
     while (true) {
         //vynulovani filedescriptor setu
         FD_ZERO(&fileDescriptorSet);
@@ -85,7 +86,6 @@ void Server::selectServer() {
             cerr << "Select error, please try again later" << endl;
             exit(EXIT_FAILURE);
         }
-
         //Pokud je neco na server socketu, jedna se o novy pokus o pripojeni
         if (FD_ISSET(serverSocketFileDescriptor, &fileDescriptorSet)) {
             auto acceptResult = accept(serverSocketFileDescriptor, (sockaddr*) &clientAddress,
@@ -116,14 +116,16 @@ void Server::selectServer() {
                     continue;
                 } else {
                     try {
-                        cout << buffer;
+                        cout << buffer << endl;
                         auto message = make_shared<TCPData>(buffer);
+
                         auto client = getClient(clientSocket);
 
                         if (client == nullptr) {
-                            auto isLoggedIn = messageHandler->handleLogin(clientSocket, message);
 
-                            if (!isLoggedIn) {
+                            auto keepConnection = messageHandler->handleSocketMessage(clientSocket, message);
+
+                            if (!keepConnection) {
                                 close(clientSocket);
                                 clientSockets.erase(clientSockets.begin() + iterator);
                                 continue;
@@ -337,7 +339,7 @@ void Server::launch() {
                 auto client = getClient(clientSocket);
 
                 if (client == nullptr) {
-                    messageHandler->handleLogin(clientSocket, message);
+                    messageHandler->handleSocketMessage(clientSocket, message);
                 } else {
 
                     bool handledByLobby = false;

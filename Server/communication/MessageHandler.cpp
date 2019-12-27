@@ -9,8 +9,14 @@
 
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
-bool MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& message) {
+bool MessageHandler::handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message) {
     try {
+
+        if (message->valueOf(DATATYPE) == PING) {
+            pingBack(clientSocket);
+            return true;
+        }
+
         auto request = message->valueOf(REQUEST);
 
         if (request == LOGIN) {
@@ -92,9 +98,7 @@ void MessageHandler::handleClientResponse(const shared_ptr<Client>& client, cons
 }
 
 void MessageHandler::pingBack(const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_RESPONSE);
-    message.add(RESPONSE, PING);
-    sendMessage(client->getClientSocket(), message.serialize());
+    pingBack(client->getClientSocket());
 }
 
 void MessageHandler::sendLobbyJoinable(const shared_ptr<Client>& client, bool joinable, int lobbyId) {
@@ -151,4 +155,10 @@ void MessageHandler::sendLobbyInfo(const shared_ptr<Client>& client, const share
     }
 
     sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void MessageHandler::pingBack(int clientSocket) {
+    auto message = TCPData(DATATYPE_RESPONSE);
+    message.add(RESPONSE, PING);
+    sendMessage(clientSocket, message.serialize());
 }

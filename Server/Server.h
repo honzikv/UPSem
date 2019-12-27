@@ -23,6 +23,8 @@
 #include "lobby/Lobby.h"
 #include "communication/Constants.h"
 #include "serialization/TCPData.h"
+#include "communication/Fields.h"
+#include "communication/Values.h"
 
 using namespace std;
 
