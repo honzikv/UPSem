@@ -10,6 +10,7 @@
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
 bool MessageHandler::handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message) {
+    cout << "parsing " << message->serialize();
     try {
 
         if (message->valueOf(DATATYPE) == PING) {
@@ -18,6 +19,7 @@ bool MessageHandler::handleSocketMessage(int clientSocket, const shared_ptr<TCPD
         }
 
         auto request = message->valueOf(REQUEST);
+        cout << request << endl;
 
         if (request == LOGIN) {
             if (server.isLoginUnique(message->valueOf(USERNAME))) {

@@ -116,34 +116,43 @@ void Server::selectServer() {
                     continue;
                 } else {
                     try {
-                        cout << buffer << endl;
-                        auto message = make_shared<TCPData>(buffer);
+                        auto bufferString = string(buffer);
+                        auto messageList = vector<string>();
+                        auto stringStream = stringstream(bufferString);
 
-                        auto client = getClient(clientSocket);
+                        string temp;
+                        while (getline(stringStream, temp, '\n')) {
+                            messageList.push_back(temp);
+                        }
+                        for (auto string : messageList) {
+                            auto message = make_shared<TCPData>(string);
 
-                        if (client == nullptr) {
+                            auto client = getClient(clientSocket);
 
-                            auto keepConnection = messageHandler->handleSocketMessage(clientSocket, message);
+                            if (client == nullptr) {
 
-                            if (!keepConnection) {
-                                close(clientSocket);
-                                clientSockets.erase(clientSockets.begin() + iterator);
-                                continue;
-                            }
+                                auto keepConnection = messageHandler->handleSocketMessage(clientSocket, message);
 
-                        } else {
-
-                            bool handledByLobby = false;
-                            for (auto const& lobby : lobbies) {
-                                if (lobby->contains(client)) {
-                                    lobby->addNewMessage(message, client);
-                                    handledByLobby = true;
-                                    break;
+                                if (!keepConnection) {
+                                    close(clientSocket);
+                                    clientSockets.erase(clientSockets.begin() + iterator);
+                                    continue;
                                 }
-                            }
 
-                            if (!handledByLobby) {
-                                messageHandler->handleClientMessage(client, message);
+                            } else {
+
+                                bool handledByLobby = false;
+                                for (auto const& lobby : lobbies) {
+                                    if (lobby->contains(client)) {
+                                        lobby->addNewMessage(message, client);
+                                        handledByLobby = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!handledByLobby) {
+                                    messageHandler->handleClientMessage(client, message);
+                                }
                             }
                         }
 
@@ -154,6 +163,8 @@ void Server::selectServer() {
                         clientSockets.erase(clientSockets.begin() + iterator);
                         continue;
                     }
+
+                    cout << endl;
                 }
             }
 

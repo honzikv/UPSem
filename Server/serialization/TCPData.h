@@ -26,83 +26,22 @@ class TCPData {
     bool isEditable = true;
 
 public:
-    explicit TCPData(DataType dataType) {
-        this->dataType = dataType;
-    }
+    explicit TCPData(DataType dataType);
 
-    explicit TCPData(const char* charArray) {
-        deserialize(charArray);
-    }
+    /**
+     * Predpoklada prectenou zpravu z bufferu, zpravy pouzivaji oddeleni {}\n
+     * @param message zprava, ktera se ma zpracovat
+     */
+    explicit TCPData(string message);
 
-    string valueOf(string field) {
-        return fields.at(field);
-    }
+    string valueOf(string field);
 
-    void add(string field, string value) {
-        if (!isEditable) {
-            throw exception();
-        }
+    void add(string field, string value);
 
-        fields.emplace(field, value);
-    }
-
-    string serialize() {
-        auto data = string("{");
-
-        for (auto const &[field, value] : fields) {
-            data.append(field).append(":").append(value).append(",");
-        }
-        data.append("dataType").append(":");
-
-        if (dataType == DATATYPE_REQUEST) {
-            data.append("request");
-        } else if (dataType == DATATYPE_RESPONSE) {
-            data.append("response");
-        } else {
-            data.append("ping");
-        }
-
-        data.append("}\n");
-
-        isEditable = false;
-        cout << data;
-        return data;
-    }
+    string serialize();
 
 private:
-    void deserialize(const char* charArray) {
-        auto data = make_unique<string>(string(charArray));
-        fields.clear();
-
-        //Parsing objektu
-        if (data->find_first_of("{") != 0 || data->find_last_of("}") != data->length() - 1) {
-            cerr << "error while parsing data" << endl;
-            throw exception();
-        }
-
-        data->erase(remove(data->begin(), data->end(), '{'), data->end());
-        data->erase(remove(data->begin(), data->end(), '}'), data->end());
-
-        auto fieldList = vector<string>();
-        auto stringStream = stringstream(data.operator*());
-
-        string temp;
-        while (getline(stringStream, temp, ',')) {
-            fieldList.push_back(temp);
-        }
-
-        for (const auto& field : fieldList) {
-            int doubleColonPosition;
-            if ((doubleColonPosition = field.find(':')) == string::npos ||
-                doubleColonPosition == field.length() - 1) {
-                cout << "incorrect input" << endl;
-                throw exception();
-            }
-
-            this->fields.emplace(field.substr(0, doubleColonPosition),
-                                 field.substr(doubleColonPosition + 1, field.size() - 1));
-        }
-    }
+    void deserialize(string message);
 };
 
 
