@@ -59,7 +59,7 @@ string TCPData::serialize() {
     return data;
 }
 
-void TCPData::add(string field, string value) {
+void TCPData::add(const string& field, const string& value) {
     if (!isEditable) {
         throw exception();
     }
@@ -67,11 +67,11 @@ void TCPData::add(string field, string value) {
     fields.emplace(field, value);
 }
 
-string TCPData::valueOf(string field) {
+string TCPData::valueOf(const string& field) {
     return fields.at(field);
 }
 
-TCPData::TCPData(string message) {
+TCPData::TCPData(const string& message) {
     deserialize(message);
 }
 

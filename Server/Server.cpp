@@ -56,9 +56,6 @@ void Server::selectServer() {
     auto maxSocket = -1;
     timeval timeout;
 
-    //buffer pro zpravy
-
-
     cout << "Server is ready to handle clients " << endl;
     while (true) {
         maxSocket = setupFileDescriptors(maxSocket);
@@ -107,7 +104,11 @@ void Server::selectServer() {
 
                         for (const auto& messageFromBuffer : messageVector) {
                             cout << messageFromBuffer << endl;
+
                             auto message = make_shared<TCPData>(messageFromBuffer);
+                            if (!message->isValid()) {
+                                throw exception();
+                            }
                             messageHandler->handleMessage(clientSocket, message);
                         }
                     }
@@ -124,11 +125,14 @@ void Server::selectServer() {
 
         for (auto socketToClose : socketsToClose) {
             close(socketToClose);
+            cout << "connection closed " << socketToClose << endl;
             clientSockets.erase(remove(
                     clientSockets.begin(), clientSockets.end(), socketToClose), clientSockets.end());
 
             auto client = getClientBySocket(socketToClose);
-            client->setClientSocket(-1);
+            if (client != nullptr) {
+                client->setClientSocket(-1);
+            }
         }
         socketsToClose.clear();
     }

@@ -19,29 +19,31 @@ using namespace std;
 
 class TCPData {
 
-    DataType dataType;
+        DataType dataType;
 
-    unordered_map<string, string> fields;
+        unordered_map<string, string> fields;
 
-    bool isEditable = true;
+        bool isEditable = true;
 
-public:
-    explicit TCPData(DataType dataType);
+    public:
+        explicit TCPData(DataType dataType);
 
-    /**
-     * Predpoklada prectenou zpravu z bufferu, zpravy pouzivaji oddeleni {}\n
-     * @param message zprava, ktera se ma zpracovat
-     */
-    explicit TCPData(string message);
+        /**
+         * Predpoklada prectenou zpravu z bufferu, zpravy pouzivaji oddeleni {}\n
+         * @param message zprava, ktera se ma zpracovat
+         */
+        explicit TCPData(const string& message);
 
-    string valueOf(string field);
+        string valueOf(const string& field);
 
-    void add(string field, string value);
+        void add(const string& field, const string& value);
 
-    string serialize();
+        serialize();
 
-private:
-    void deserialize(string message);
+        bool isValid() const;
+
+    private:
+        void deserialize(string message);
 };
 
 
