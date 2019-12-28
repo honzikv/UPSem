@@ -9,116 +9,33 @@
 
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
-bool MessageHandler::handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message) {
-    cout << "parsing " << message->serialize();
+void MessageHandler::handleMessage(int clientSocket, const shared_ptr<TCPData>& message) {
+
     try {
-
-        if (message->valueOf(DATATYPE) == PING) {
+        auto dataType = message->valueOf(DATATYPE);
+        if (dataType == REQUEST) {
+            handleRequest(clientSocket, message);
+        } else if (dataType == RESPONSE) {
+            handleResponse(clientSocket, message);
+        } else if (dataType == PING) {
             pingBack(clientSocket);
-            return true;
-        }
-
-        auto request = message->valueOf(REQUEST);
-        cout << request << endl;
-
-        if (request == LOGIN) {
-            if (server.isLoginUnique(message->valueOf(USERNAME))) {
-                server.addClient(message->valueOf(USERNAME), clientSocket);
-                sendUsernameUnique(clientSocket, true);
-                return true;
-            }
-            sendUsernameUnique(clientSocket, false);
-            return false;
-        }
-
-        if (request == RECONNECT) {
-            if (!server.isLoginUnique(message->valueOf(LOGIN))) {
-                //todo actually reconnect the fucker
-                sendClientReconnected(clientSocket);
-                return true;
-            }
-            sendClientNotFound(clientSocket);
-            return false;
         }
     }
+        //Pokud zachyti chybu, hodi ji do select funkce, kde se o ni postara server
     catch (exception& ex) {
         cerr << ex.what();
         throw exception();
     }
-}
 
-void MessageHandler::handleClientMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
-
-    try {
-        auto dataTypeFieldValue = message->valueOf(DATA_TYPE);
-        if (dataTypeFieldValue == PING) {
-            pingBack(client);
-        }
-
-        if (dataTypeFieldValue == RESPONSE) {
-            handleClientResponse(client, message);
-        } else {
-            handleClientRequest(client, message);
-        }
-    }
-    catch (exception&) {
-        server.kickClient(client);
-    }
-}
-
-void MessageHandler::handleClientRequest(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
-    try {
-        auto request = message->valueOf(REQUEST);
-
-        if (request == LOBBY_LIST) {
-            sendLobbyList(client);
-            return;
-        }
-
-        if (request == JOIN_LOBBY) {
-            auto lobbyId = stoi(message->valueOf(LOBBY_ID));
-            auto isJoinable = server.isLobbyJoinable(lobbyId);
-
-            if (isJoinable) {
-                server.getLobby(lobbyId)->addClient(client);
-                sendLobbyJoinable(client, true, lobbyId);
-                sendLobbyInfo(client, server.getLobby(lobbyId));
-            }
-        }
-    }
-    catch (exception&) {
-        server.kickClient(client);
-    }
 }
 
 void MessageHandler::sendMessage(int socket, const string& message) {
-    send(socket, message.c_str(), message.size(), 0);
+    cout << message;
+    if (send(socket, message.c_str(), message.size(), 0) <= 0) {
+        server.closeConnection(socket);
+    }
 }
 
-void MessageHandler::handleClientResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
-
-}
-
-void MessageHandler::pingBack(const shared_ptr<Client>& client) {
-    pingBack(client->getClientSocket());
-}
-
-void MessageHandler::sendLobbyJoinable(const shared_ptr<Client>& client, bool joinable, int lobbyId) {
-    auto message = TCPData(DATATYPE_RESPONSE);
-    message.add(RESPONSE, JOIN_LOBBY);
-    message.add(IS_JOINABLE, joinable ? TRUE : FALSE);
-    message.add(LOBBY_ID, to_string(lobbyId));
-
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void MessageHandler::sendUsernameUnique(int clientSocket, bool isUnique) {
-    auto message = TCPData(DATATYPE_RESPONSE);
-    message.add(RESPONSE, LOGIN);
-    message.add(IS_UNIQUE, isUnique ? TRUE : FALSE);
-
-    sendMessage(clientSocket, message.serialize());
-}
 
 void MessageHandler::sendLobbyList(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_RESPONSE);
@@ -130,37 +47,132 @@ void MessageHandler::sendLobbyList(const shared_ptr<Client>& client) {
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
-void MessageHandler::sendClientNotFound(int clientSocket) {
-    auto message = TCPData(DATATYPE_RESPONSE);
-    message.add(RESPONSE, RECONNECT);
-    message.add(RECONNECTED, FALSE);
 
-    sendMessage(clientSocket, message.serialize());
+void MessageHandler::pingBack(int clientSocket) {
+    try {
+        auto message = TCPData(DATATYPE_RESPONSE);
+        message.add(RESPONSE, PING);
+        sendMessage(clientSocket, message.serialize());
+    }
+    catch (exception& exception) {
+        throw exception;
+    }
+}
+
+void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& message) {
+
+    auto request = message->valueOf(REQUEST);
+
+    try {
+        if (request == LOGIN) {
+            auto username = message->valueOf(USERNAME);
+            auto client = server.getClientByUsername(username);
+            if (client == nullptr) {
+                server.registerClient(username, clientSocket);
+                sendLoginIsNew(clientSocket);
+                cout << "Welcome \"" << username << "\" on the server " << endl;
+            } else {
+                client = server.getClientByUsername(username);
+                server.closeConnection(client->getClientSocket());
+                //todo send relog from another location
+                client->setClientSocket(clientSocket);
+                sendClientReconnected(clientSocket);
+                cout << "Client \"" << username << "\" was reconnected " << endl;
+            }
+        } else {
+            auto client = server.getClientBySocket(clientSocket);
+
+            if (client->isInLobby()) {
+                auto lobby = server.getLobby(client->getLobbyId());
+                lobby->addNewMessage(message, client);
+                return;
+            }
+
+            if (request == LOBBY_LIST) {
+                //posle lobby list
+                sendLobbyList(client);
+            } else if (request == JOIN_LOBBY) {
+                //posle info o lobby, pokud je lobby plna posle pouze ze je plna, jinak posle i jmena hracu
+                sendLobby(client, message);
+            } else if (request == LEAVE_LOBBY) {
+                //pokud je klient v lobby odstrani ho
+                leaveLobby(client, message);
+            }
+        }
+    }
+    catch (exception& exception) {
+        cout << "exception " << endl;
+        throw exception;
+    }
+}
+
+void MessageHandler::sendLoginIsNew(int clientSocket) {
+    try {
+        auto message = TCPData(DATATYPE_RESPONSE);
+        message.add(RESPONSE, LOGIN);
+        message.add(IS_NEW, TRUE);
+        sendMessage(clientSocket, message.serialize());
+    }
+    catch (exception& exception) {
+        throw exception;
+    }
+}
+
+void MessageHandler::handleResponse(int clientSocket, const shared_ptr<TCPData>& message) {
+
+}
+
+void MessageHandler::sendLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
+    try {
+        auto response = TCPData(DATATYPE_RESPONSE);
+        response.add(RESPONSE, JOIN_LOBBY);
+        auto lobbyId = stoi(message->valueOf(LOBBY_ID));
+        auto isJoinable = server.isLobbyJoinable(lobbyId);
+        response.add(IS_JOINABLE, isJoinable ? TRUE : FALSE);
+
+        if (isJoinable) {
+            response.add(LOBBY_ID, to_string(lobbyId));
+            auto lobby = server.getLobby(lobbyId);
+            lobby->addClient(client);
+            auto clientNo = 0;
+            for (const auto& currentClient : lobby->getClients()) {
+                response.add(CLIENT + to_string(clientNo), currentClient->getUsername());
+                clientNo++;
+            }
+        }
+
+        sendMessage(client->getClientSocket(), response.serialize());
+    }
+    catch (exception& exception) {
+        throw exception;
+    }
+}
+
+void MessageHandler::leaveLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
+    try {
+        auto lobby = server.getLobby(client);
+        if (lobby != nullptr) {
+            lobby->removeClient(client);
+        }
+
+        auto response = TCPData(DATATYPE_RESPONSE);
+        response.add(REQUEST, LEAVE_LOBBY);
+        response.add(LEAVE_LOBBY, TRUE);
+
+        sendMessage(client->getClientSocket(), response.serialize());
+    }
+    catch (exception& exception) {
+        throw exception;
+    }
 }
 
 void MessageHandler::sendClientReconnected(int clientSocket) {
-    auto message = TCPData(DATATYPE_RESPONSE);
-    message.add(RESPONSE, RECONNECT);
-    message.add(RECONNECTED, TRUE);
-
-    sendMessage(clientSocket, message.serialize());
-}
-
-void MessageHandler::sendLobbyInfo(const shared_ptr<Client>& client, const shared_ptr<Lobby>& lobby) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, UPDATE_PLAYER_LIST);
-
-    //Cislo klienta
-    auto clientNo = 0;
-    for (const auto& currentClient : lobby->getClients()) {
-        message.add(CLIENT + to_string(clientNo), currentClient->getId());
+    try {
+        auto message = TCPData(DATATYPE_RESPONSE);
+        message.add(RESPONSE, LOGIN);
+        message.add(IS_NEW, FALSE);
     }
-
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void MessageHandler::pingBack(int clientSocket) {
-    auto message = TCPData(DATATYPE_RESPONSE);
-    message.add(RESPONSE, PING);
-    sendMessage(clientSocket, message.serialize());
+    catch (exception& exception) {
+        throw exception;
+    }
 }

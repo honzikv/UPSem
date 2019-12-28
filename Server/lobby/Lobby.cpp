@@ -12,7 +12,11 @@ bool Lobby::addClient(const shared_ptr<Client>& client) {
     }
 
     clients.push_back(client);
-    clientIdsMap[client->getId()] = client;
+    clientIdsMap[client->getUsername()] = client;
+
+    if (clients.size() == limit) {
+        joinable = false;
+    }
 
     return true;
 }
@@ -41,14 +45,21 @@ int Lobby::getId() const {
     return id;
 }
 
-bool Lobby::contains(shared_ptr<Client>& client) {
-    return clientIdsMap.find(client->getId()) != clientIdsMap.end();
+bool Lobby::contains(const shared_ptr<Client>& client) {
+    return clientIdsMap.find(client->getUsername()) != clientIdsMap.end();
 }
 
-void Lobby::addNewMessage(shared_ptr<TCPData>& message, shared_ptr<Client>& client) {
+void Lobby::addNewMessage(const shared_ptr<TCPData>& message, const shared_ptr<Client>& client) {
     unprocessedMessages.emplace_back(make_shared<ClientData>(message, client));
 }
 
 const vector<shared_ptr<Client>>& Lobby::getClients() const {
     return clients;
+}
+
+void Lobby::removeClient(const shared_ptr<Client>& client) {
+    if (clientIdsMap.erase(client->getUsername()) == 0 && !joinable) {
+        joinable = true;
+    }
+    clients.erase(remove(clients.begin(),clients.end(),client),clients.end());
 }

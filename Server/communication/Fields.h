@@ -10,12 +10,12 @@
 #define RESPONSE "response"
 #define USERNAME "username"
 #define LOBBY_ID "lobbyId"
-#define IS_UNIQUE "isUnique"
+#define IS_NEW "isNew"
 #define IS_JOINABLE "isJoinable"
 #define DATA_TYPE "dataType"
 #define LOBBY_ID "lobbyId"
-#define RECONNECT "reconnect"
-#define RECONNECTED "reconnected"
+#define REMOVE_FROM_LOBBY "removeFromLobby"
 #define CLIENT "client"
+
 
 #endif //UPSEM_FIELDS_H

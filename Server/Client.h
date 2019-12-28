@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <string>
 #include <netinet/in.h>
+#include <atomic>
 
 using namespace std;
 
@@ -16,12 +17,12 @@ class Client {
         /**
          * Id klienta, tzn. jeho username
          */
-        const string id;
+        const string username;
 
         /**
          * Cislo socketu klienta
          */
-        int clientSocket;
+        atomic<int> clientSocket;
 
         /**
          * Flag, zda-li uzivatel volil pro start hry, pokud alespon 50% uzivatelu volilo pro start lobby automaticky
@@ -32,19 +33,31 @@ class Client {
         /**
          * Flag pro server pro zjisteni, zda-li ma s klientem komunikovat
          */
-        bool isInLobby = false;
+        bool inLobby = false;
+
+        int lobbyId;
+
 
     public:
+        int getLobbyId() const;
+
+        void setLobbyId(int lobbyId);
+
+        bool isInLobby() const;
+
+        void setInLobby(bool inLobby);
+
+        void setClientSocket(int clientSocket);
+
         bool hasVoted() const;
 
         bool operator==(const Client& anotherClient) const;
 
         bool operator!=(const Client& anotherClient) const;
 
-    public:
         Client(string id, int fileDescriptor);
 
-        const string& getId() const;
+        const string& getUsername() const;
 
         int getClientSocket() const;
 

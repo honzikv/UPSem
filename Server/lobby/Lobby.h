@@ -33,15 +33,10 @@ class Lobby {
         vector<shared_ptr<Client>> clients;
 
         /**
-         * Sockety klientu pro select()
-         */
-        vector<int> clientSockets;
-
-        /**
          * Flag, zda-li je lobby joinable, tzn. pokud uzivatel zazada o pripojeni do teto lobby, tak bude pripojen ci
          * nikoliv
          */
-        bool joinable = false;
+        bool joinable = true;
 
         /**
          * Limit hracu
@@ -79,15 +74,17 @@ class Lobby {
 
         bool addClient(const shared_ptr<Client>& client);
 
+        void removeClient(const shared_ptr<Client>& client);
+
         int getClientCount();
 
         string getState();
 
         void increaseHasVoted();
 
-        bool contains(shared_ptr<Client>& client);
+        bool contains(const shared_ptr<Client>& client);
 
-        void addNewMessage(shared_ptr<TCPData>& message, shared_ptr<Client>& client);
+        void addNewMessage(const shared_ptr<TCPData>& message, const shared_ptr<Client>& client);
 
         const vector<shared_ptr<Client>>& getClients() const;
 };

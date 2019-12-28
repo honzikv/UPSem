@@ -76,6 +76,8 @@ class Server {
 
         vector<int> clientSockets;
 
+        unordered_set<int> socketsToClose;
+
         /**
          *
          */
@@ -84,25 +86,34 @@ class Server {
     public:
         Server(int port, int lobbyCount);
 
-        void init();
-
-        void launch();
-
-        void kickClient(shared_ptr<Client> client);
-
-        shared_ptr<Client> getClient(int socket);
+        /**
+         * Najde klienta podle id file descriptoru socketu
+         * @param socket id socketu
+         * @return shared pointer na klienta nebo nullptr pokud klient nebyl nalezen
+         */
+        shared_ptr<Client> getClientBySocket(int socket);
 
         shared_ptr<Lobby> getLobby(int lobbyId);
 
+        shared_ptr<Lobby> getLobby(const shared_ptr<Client>& client);
+
+        shared_ptr<Client> getClientByUsername(const string& username);
+
         const vector<shared_ptr<Lobby>>& getLobbies();
 
-        bool isLoginUnique(string username);
+        bool isLoginUnique(const string& username);
 
         bool isLobbyJoinable(int lobbyId);
 
         void createThreads();
 
-        void addClient(const string& username, int clientSocket);
+        void registerClient(const string& username, int clientSocket);
+
+        void closeConnection(int clientSocket);
+
+        int setupFileDescriptors(int maxSocket);
+
+        void acceptNewClient(int& addressLength);
 
         void selectServer();
 };

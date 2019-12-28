@@ -29,32 +29,27 @@ class MessageHandler {
          * @param message zprava
          * @return vraci true, pokud byl klient uspesne pripojen, jinak se spojeni zavre
          */
-        bool handleSocketMessage(int clientSocket, const shared_ptr<TCPData>& message);
-
-        void handleClientMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
+        void handleMessage(int clientSocket, const shared_ptr<TCPData>& message);
 
     private:
-        void handleClientRequest(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
 
-        void handleClientResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
+        void pingBack(int clientSocket);
 
-        static void pingBack(int clientSocket);
-
-        static void pingBack(const shared_ptr<Client>& client);
-
-        static void sendMessage(int socket, const string& message);
-
-        static void sendUsernameUnique(int clientSocket, bool isUnique);
+        void sendMessage(int socket, const string& message);
 
         void sendLobbyList(const shared_ptr<Client>& client);
 
-        static void sendLobbyJoinable(const shared_ptr<Client>& client, bool joinable, int lobbyId);
+        void handleRequest(int clientSocket, const shared_ptr<TCPData>& message);
 
-        static void sendClientNotFound(int clientSocket);
+        void sendLoginIsNew(int clientSocket);
 
-        static void sendClientReconnected(int clientSocket);
+        void handleResponse(int clientSocket, const shared_ptr<TCPData>& message);
 
-        void sendLobbyInfo(const shared_ptr<Client>& client, const shared_ptr<Lobby>& lobby);
+        void sendLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
+
+        void leaveLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
+
+        void sendClientReconnected(int clientSocket);
 };
 
 
