@@ -27,10 +27,9 @@ void TCPData::deserialize(string message) {
 
     for (const auto& field : fieldList) {
         int doubleColonPosition;
-        if ((doubleColonPosition = field.find(':')) == string::npos ||
-            doubleColonPosition == field.length() - 1) {
+        if ((doubleColonPosition = field.find(':')) == string::npos || doubleColonPosition == field.length() - 1) {
             cout << "incorrect input" << endl;
-            throw exception();
+            throw DeserializationException();
         }
 
         this->fields.emplace(field.substr(0, doubleColonPosition),

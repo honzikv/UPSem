@@ -7,12 +7,10 @@
 #include "communication/MessageHandler.h"
 
 Server::Server(int port, int lobbyCount) : port(port) {
-
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
     }
     createThreads();
-
     this->messageHandler = make_shared<MessageHandler>(*this);
     selectServer();
 }
@@ -26,14 +24,13 @@ void Server::selectServer() {
         exit(EXIT_FAILURE);
     }
 
-    auto opt = 1;
+    auto option = 1;
     //nastaveni socketu aby prijmal vice spojeni
-    if (setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, (char*) &opt,
-                   sizeof(opt)) < 0) {
+    if (setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, (char*) &option,
+                   sizeof(option)) < 0) {
         cerr << "Setting socket option failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
-
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
@@ -104,11 +101,7 @@ void Server::selectServer() {
 
                         for (const auto& messageFromBuffer : messageVector) {
                             cout << messageFromBuffer << endl;
-
                             auto message = make_shared<TCPData>(messageFromBuffer);
-                            if (!message->isValid()) {
-                                throw exception();
-                            }
                             messageHandler->handleMessage(clientSocket, message);
                         }
                     }
@@ -132,9 +125,27 @@ void Server::selectServer() {
             auto client = getClientBySocket(socketToClose);
             if (client != nullptr) {
                 client->setClientSocket(-1);
+
+                auto lobby = getLobby(client->getLobbyId());
+                if (lobby != nullptr) {
+                    lobby->removeClient(client);
+                }
             }
         }
         socketsToClose.clear();
+
+        auto currentTime = chrono::system_clock::now();
+        for (const auto& client : clients) {
+            auto timeElapsed = chrono::duration<double, milli>(currentTime - client->getLastMessageReceived()).count();
+
+            if (timeElapsed > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
+                client->setDisconnected(true);
+            }
+
+            if (timeElapsed > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
+                removeClient(client);
+            }
+        }
     }
 }
 
@@ -154,7 +165,6 @@ void Server::acceptNewClient(int& addressLength) {
 int Server::setupFileDescriptors(int maxSocket) {
     //vynulovani filedescriptor setu
     FD_ZERO(&fileDescriptorSet);
-
     //pridani socketu serveru do filedescriptor setu
     FD_SET(serverSocketFileDescriptor, &fileDescriptorSet);
     maxSocket = serverSocketFileDescriptor;
@@ -218,7 +228,12 @@ bool Server::isLobbyJoinable(int lobbyId) {
 void lobbyFunction(shared_ptr<Lobby> lobby, Server& server) {
 
     while (true) {
+        lobby->processMessages();
+        if (lobby->isTimeToPlay()) {
+            lobby->startGame();
+        }
 
+        lobby->handleGameState();
 
         this_thread::sleep_for(chrono::milliseconds(LOBBY_THREAD_SLEEP_MS));
     }
@@ -261,5 +276,21 @@ shared_ptr<Lobby> Server::getLobby(const shared_ptr<Client>& client) {
     }
 
     return nullptr;
+}
+
+void Server::removeClient(const shared_ptr<Client>& client) {
+    clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
+
+    if (client->getClientSocket() != -1) {
+        close(client->getClientSocket());
+        clientSockets.erase(remove(
+                clientSockets.begin(), clientSockets.end(), client->getClientSocket()), clientSockets.end());
+    }
+
+    //Pokud je nahodou klient v lobby odstranime ho z lobby
+    if (client->isInLobby() && getLobby(client->getLobbyId()) != nullptr) {
+        getLobby(client->getLobbyId())->removeClient(client);
+    }
+    cout << "data of client " << client->getUsername() << " has been removed" << endl;
 }
 

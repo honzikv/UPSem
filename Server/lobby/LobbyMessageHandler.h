@@ -19,11 +19,19 @@ class LobbyMessageHandler {
     public:
         explicit LobbyMessageHandler(Lobby& lobby);
 
-        void handleMessage(shared_ptr<Client>& client, shared_ptr<TCPData>&);
+        void handleMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>&);
 
-        void handleResponse(shared_ptr<Client>& client, shared_ptr<TCPData>&);
+        void handleResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>&);
 
-        void handleRequest(shared_ptr<Client>& client, shared_ptr<TCPData>&);
+        void handleRequest(const shared_ptr<Client>& client, const shared_ptr<TCPData>&);
+
+        void sendShowPlayerConnectedRequest(const shared_ptr<Client>& client, const string& connectedPlayer);
+
+        void sendShowPlayerDisconnectedRequest(const shared_ptr<Client>& client, const string& disconnectedPlayer);
+
+        void sendMessage(int socket, const string& message);
+
+        void sendUpdatePlayerListRequest(const shared_ptr<Client>& client);
 };
 
 

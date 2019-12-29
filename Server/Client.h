@@ -9,6 +9,8 @@
 #include <string>
 #include <netinet/in.h>
 #include <atomic>
+#include <chrono>
+#include <utility>
 
 using namespace std;
 
@@ -28,17 +30,25 @@ class Client {
          * Flag, zda-li uzivatel volil pro start hry, pokud alespon 50% uzivatelu volilo pro start lobby automaticky
          * spusti hru
          */
-        bool voted = false;
+        atomic<bool> voted = false;
+
+        /**
+         * Urcuje, zda-li je hrac disconnected
+         */
+        atomic<bool> disconnected = false;
 
         /**
          * Flag pro server pro zjisteni, zda-li ma s klientem komunikovat
          */
-        bool inLobby = false;
+        atomic<bool> inLobby = false;
 
-        int lobbyId;
+        atomic<int> lobbyId = -1;
 
+        chrono::time_point<chrono::system_clock> lastMessageReceived;
 
     public:
+        Client(string id, int fileDescriptor);
+
         int getLobbyId() const;
 
         void setLobbyId(int lobbyId);
@@ -55,14 +65,17 @@ class Client {
 
         bool operator!=(const Client& anotherClient) const;
 
-        Client(string id, int fileDescriptor);
-
         const string& getUsername() const;
 
         int getClientSocket() const;
 
         void setHasVoted(bool hasVoted);
 
+        void updateLastMessageReceived();
+
+        void setDisconnected(bool disconnected);
+
+        const chrono::time_point<chrono::system_clock>& getLastMessageReceived() const;
 };
 
 

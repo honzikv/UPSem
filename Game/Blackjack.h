@@ -12,13 +12,9 @@
 #include "../Server/Server.h"
 #include <memory>
 
-#define TIMEOUT_MS 15000
-
 using namespace std;
 
 class Blackjack {
-
-    const int maxPlayerCount;
 
     vector<shared_ptr<Player>> players;
 
@@ -26,14 +22,12 @@ class Blackjack {
 
     shared_ptr<Deck> deck;
 
-    shared_ptr<Server> server;
-
 public:
     void addPlayer(shared_ptr<Player> player);
 
     void start();
 
-    Blackjack(const int maxPlayerCount);
+    Blackjack();
 };
 
 

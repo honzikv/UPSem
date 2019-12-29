@@ -4,9 +4,10 @@
 
 #include "Client.h"
 
-#include <utility>
 
-Client::Client(string id, int fileDescriptor) : username(std::move(id)), clientSocket(fileDescriptor) {}
+Client::Client(string id, int fileDescriptor) : username(std::move(id)), clientSocket(fileDescriptor) {
+    lastMessageReceived = chrono::system_clock::now();
+}
 
 const string& Client::getUsername() const {
     return username;
@@ -52,3 +53,16 @@ int Client::getLobbyId() const {
 void Client::setLobbyId(int lobbyId) {
     Client::lobbyId = lobbyId;
 }
+
+void Client::updateLastMessageReceived() {
+    lastMessageReceived = chrono::system_clock::now();
+}
+
+const chrono::time_point<chrono::system_clock>& Client::getLastMessageReceived() const {
+    return lastMessageReceived;
+}
+
+void Client::setDisconnected(bool disconnected) {
+    Client::disconnected = disconnected;
+}
+

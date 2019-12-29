@@ -16,5 +16,7 @@
 #define VOTE_START "voteStart"
 #define UPDATE_PLAYER_LIST "updatePlayerList"
 #define LEAVE_LOBBY "leaveLobby"
+#define SHOW_PLAYER_DISCONNECTED "showPlayerDisconnected"
+#define SHOW_PLAYER_CONNECTED "showPlayerConnected"
 
 #endif //UPSEM_VALUES_H

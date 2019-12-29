@@ -60,10 +60,12 @@ class Lobby {
          */
         shared_ptr<LobbyMessageHandler> lobbyMessageHandler;
 
+        unordered_map<string, chrono::time_point<chrono::system_clock>> clientResponseTimes;
+
         /**
-         * Namapovaná ID s klienty
+         * Cas, kdy lobby naposledy odeslala zadost klientum, aby si aktualizovali player list
          */
-        unordered_map<string, shared_ptr<Client>> clientIdsMap;
+        chrono::time_point<chrono::system_clock> lastPlayerListUpdate;
 
     public:
         Lobby(int limit, int id);
@@ -80,13 +82,23 @@ class Lobby {
 
         string getState();
 
-        void increaseHasVoted();
+        void incrementVotes();
 
         bool contains(const shared_ptr<Client>& client);
 
         void addNewMessage(const shared_ptr<TCPData>& message, const shared_ptr<Client>& client);
 
+        void processMessages();
+
         const vector<shared_ptr<Client>>& getClients() const;
+
+        void updatePlayerResponseTime(const string& username);
+
+        bool isTimeToPlay();
+
+        void startGame();
+
+        void handleGameState();
 };
 
 

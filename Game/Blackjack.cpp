@@ -16,6 +16,6 @@ void Blackjack::start() {
 
 }
 
-Blackjack::Blackjack(const int maxPlayerCount) : maxPlayerCount(maxPlayerCount) {
+Blackjack::Blackjack() {
     this->deck = make_shared<Deck>();
 }

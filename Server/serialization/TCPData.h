@@ -14,6 +14,7 @@
 #include <regex>
 #include <iostream>
 #include "DataType.h"
+#include "exceptions/DeserializationException.h"
 
 using namespace std;
 
@@ -38,7 +39,7 @@ class TCPData {
 
         void add(const string& field, const string& value);
 
-        serialize();
+        string serialize();
 
         bool isValid() const;
 

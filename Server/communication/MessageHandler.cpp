@@ -9,6 +9,13 @@
 
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
+void MessageHandler::sendMessage(int socket, const string& message) {
+    cout << message;
+    if (send(socket, message.c_str(), message.size(), 0) <= 0) {
+        server.closeConnection(socket);
+    }
+}
+
 void MessageHandler::handleMessage(int clientSocket, const shared_ptr<TCPData>& message) {
 
     try {
@@ -24,18 +31,10 @@ void MessageHandler::handleMessage(int clientSocket, const shared_ptr<TCPData>& 
         //Pokud zachyti chybu, hodi ji do select funkce, kde se o ni postara server
     catch (exception& ex) {
         cerr << ex.what();
-        throw exception();
+        throw DeserializationException();
     }
 
 }
-
-void MessageHandler::sendMessage(int socket, const string& message) {
-    cout << message;
-    if (send(socket, message.c_str(), message.size(), 0) <= 0) {
-        server.closeConnection(socket);
-    }
-}
-
 
 void MessageHandler::sendLobbyList(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_RESPONSE);
@@ -60,7 +59,6 @@ void MessageHandler::pingBack(int clientSocket) {
 }
 
 void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& message) {
-
     auto request = message->valueOf(REQUEST);
 
     try {
@@ -77,16 +75,11 @@ void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& 
                 //todo send relog from another location
                 client->setClientSocket(clientSocket);
                 sendClientReconnected(clientSocket);
+                client->updateLastMessageReceived();
                 cout << "Client \"" << username << "\" was reconnected " << endl;
             }
         } else {
             auto client = server.getClientBySocket(clientSocket);
-
-            if (client->isInLobby()) {
-                auto lobby = server.getLobby(client->getLobbyId());
-                lobby->addNewMessage(message, client);
-                return;
-            }
 
             if (request == LOBBY_LIST) {
                 //posle lobby list
@@ -95,9 +88,13 @@ void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& 
                 //posle info o lobby, pokud je lobby plna posle pouze ze je plna, jinak posle i jmena hracu
                 sendLobby(client, message);
             } else if (request == LEAVE_LOBBY) {
-                //pokud je klient v lobby odstrani ho
                 leaveLobby(client, message);
+            } else if (client->isInLobby()) {
+                auto lobby = server.getLobby(client->getLobbyId());
+                lobby->addNewMessage(message, client);
             }
+
+            client->updateLastMessageReceived();
         }
     }
     catch (exception& exception) {
@@ -119,6 +116,24 @@ void MessageHandler::sendLoginIsNew(int clientSocket) {
 }
 
 void MessageHandler::handleResponse(int clientSocket, const shared_ptr<TCPData>& message) {
+    auto response = message->valueOf(RESPONSE);
+    auto client = server.getClientBySocket(clientSocket);
+
+//    if (client == nullptr) {
+//        cout << "Closing unauthenticated socket" << endl;
+//        server.closeConnection(clientSocket);
+//        return;
+//    }
+//
+//    auto lobby = server.getLobby(client->getLobbyId());
+//
+//    if (lobby == nullptr) {
+//        cout << "Closing incorrect response" << endl;
+//        server.removeClient(client);
+//    }
+//    else {
+//        lobby->addNewMessage(message, client);
+//    }
 
 }
 
@@ -156,7 +171,7 @@ void MessageHandler::leaveLobby(shared_ptr<Client>& client, const shared_ptr<TCP
         }
 
         auto response = TCPData(DATATYPE_RESPONSE);
-        response.add(REQUEST, LEAVE_LOBBY);
+        response.add(RESPONSE, LEAVE_LOBBY);
         response.add(LEAVE_LOBBY, TRUE);
 
         sendMessage(client->getClientSocket(), response.serialize());

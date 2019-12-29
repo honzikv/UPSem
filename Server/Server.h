@@ -74,8 +74,15 @@ class Server {
          */
         vector<thread> lobbyThreads;
 
+        /**
+         * Vektor s klientskymi sockety pro select
+         */
         vector<int> clientSockets;
 
+        /**
+         * Set (pokud by byl prikaz zadan vice nez 1, aby se zbytecne nezaviral stejny file descriptor) socketu,
+         * ktere se po selectu zavrou
+         */
         unordered_set<int> socketsToClose;
 
         /**
@@ -116,6 +123,8 @@ class Server {
         void acceptNewClient(int& addressLength);
 
         void selectServer();
+
+        void removeClient(const shared_ptr<Client>& client);
 };
 
 #endif
