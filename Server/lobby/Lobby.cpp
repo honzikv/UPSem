@@ -12,6 +12,8 @@ bool Lobby::addClient(const shared_ptr<Client>& client) {
 
     clients.push_back(client);
     client->setLobbyId(id);
+    client->setInLobby(true);
+
     if (clients.size() == limit) {
         joinable = false;
     }
@@ -24,7 +26,6 @@ bool Lobby::addClient(const shared_ptr<Client>& client) {
         lobbyMessageHandler->sendShowPlayerConnectedRequest(otherClient, client->getUsername());
         lobbyMessageHandler->sendUpdatePlayerListRequest(otherClient);
     }
-    lastPlayerListUpdate = chrono::system_clock::now();
 
     return true;
 }
@@ -94,14 +95,34 @@ void Lobby::removeClient(const shared_ptr<Client>& client) {
     cout << "Client " << client->getUsername() << " left lobby " << id << endl;
 }
 
-void Lobby::processMessages() {
+void Lobby::handleLobby() {
     for (const auto& message : unprocessedMessages) {
         lobbyMessageHandler->handleMessage(message->getClient(), message->getMessage());
     }
+
+    switch (lobbyState) {
+        case LOBBY_STATE_WAITING:
+            if (isPlayable()) {
+                initializeGamePrep();
+            }
+            break;
+
+        case LOBBY_STATE_PREPARING:
+            if (prepTimeOut()) {
+                startGame(gamePreparation->isPlayable());
+            }
+            break;
+
+        case LOBBY_STATE_IN_PROGRESS:
+            if (!blackjack->isGameRunning()) {
+                returnClientsToLobby(blackjack->getPlayers());
+            }
+    }
+
 }
 
-bool Lobby::isTimeToPlay() {
-    if (lobbyState == LOBBY_STATE_RUNNING) {
+bool Lobby::isPlayable() {
+    if (lobbyState == LOBBY_STATE_IN_PROGRESS) {
         return false;
     }
 
@@ -113,18 +134,72 @@ bool Lobby::isTimeToPlay() {
     return clients.size() > 2 && voteStartRatio > .66;
 }
 
-void Lobby::updatePlayerResponseTime(const string& username) {
-    auto client = clientResponseTimes.find(username);
 
-    if (client != clientResponseTimes.end()) {
-        client->second = chrono::system_clock::now();
+void Lobby::initializeGamePrep() {
+    lobbyState = LOBBY_STATE_PREPARING;
+    joinable = false;
+
+    for (auto const& client : clients) {
+        lobbyMessageHandler->sendPrepareGameSceneRequest(client);
     }
-}
-
-void Lobby::startGame() {
-
+    gamePreparation = make_unique<GamePreparation>(clients.size());
 }
 
 void Lobby::handleGameState() {
+
+}
+
+bool Lobby::prepTimeOut() {
+    if (gamePreparation == nullptr) {
+        return true;
+    }
+
+    auto currentTime = chrono::system_clock::now();
+    auto durationMillis = chrono::duration<double, milli>(
+            currentTime - gamePreparation->getInitializationTime()).count();
+    return durationMillis >= LOBBY_PREP_TIME_MS;
+}
+
+void Lobby::startGame(bool playable) {
+
+    if (!playable) {
+        cout << "Lobby " << id << " could not start, not enough active players " << endl;
+
+        //Realisticky bude hrac pouze jeden
+        for (const auto& client : gamePreparation->getConfirmedClients()) {
+            lobbyMessageHandler->sendLobbyStartFailed(client);
+        }
+        lobbyState = LOBBY_STATE_WAITING;
+        joinable = true;
+        return;
+    }
+
+    lobbyState = LOBBY_STATE_IN_PROGRESS;
+    blackjack = make_unique<Blackjack>(gamePreparation->getConfirmedClients());
+    blackjack->dealCards();
+
+    for (auto const& player : blackjack->getPlayers()) {
+        lobbyMessageHandler->sendPlayerHand(player, false);
+    }
+    lobbyMessageHandler->sendPlayerHand(blackjack->getDealer(), true);
+}
+
+void Lobby::returnClientsToLobby(const vector<shared_ptr<Client>>& players) {
+
+}
+
+void Lobby::confirmClient(shared_ptr<Client> client) {
+    gamePreparation->addConfirmedClient(client);
+}
+
+void Lobby::handleHit(const shared_ptr<Client>& client) {
+    auto result = blackjack->handleHit(client);
+
+    if (result == RESULT_OK) {
+
+    }
+}
+
+void Lobby::handleStand(const shared_ptr<Client> &client) {
 
 }

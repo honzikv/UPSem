@@ -11,6 +11,9 @@
 #include <atomic>
 #include <chrono>
 #include <utility>
+#include <vector>
+#include <memory>
+#include "../Game/PlayerInfo.h"
 
 using namespace std;
 
@@ -46,6 +49,8 @@ class Client {
 
         chrono::time_point<chrono::system_clock> lastMessageReceived;
 
+        shared_ptr<PlayerInfo> playerInfo;
+
     public:
         Client(string id, int fileDescriptor);
 
@@ -76,6 +81,10 @@ class Client {
         void setDisconnected(bool disconnected);
 
         const chrono::time_point<chrono::system_clock>& getLastMessageReceived() const;
+
+        const shared_ptr<PlayerInfo>& getPlayerInfo() const;
+
+        void clearPlayerInfo();
 };
 
 

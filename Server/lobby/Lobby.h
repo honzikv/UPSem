@@ -16,6 +16,8 @@
 #include "LobbyState.h"
 #include "../serialization/TCPData.h"
 #include "../communication/ClientData.h"
+#include "../../Game/Blackjack.h"
+#include "GamePreparation.h"
 
 class Server;
 
@@ -36,7 +38,7 @@ class Lobby {
          * Flag, zda-li je lobby joinable, tzn. pokud uzivatel zazada o pripojeni do teto lobby, tak bude pripojen ci
          * nikoliv
          */
-        bool joinable = true;
+        atomic<bool> joinable = true;
 
         /**
          * Limit hracu
@@ -51,7 +53,7 @@ class Lobby {
         /**
          * Pocet uzivatelu, kteri volili pro brzky start hry
          */
-        int votedToStart = 0;
+        atomic<int> votedToStart = 0;
 
         LobbyState lobbyState = LOBBY_STATE_WAITING;
 
@@ -60,17 +62,16 @@ class Lobby {
          */
         shared_ptr<LobbyMessageHandler> lobbyMessageHandler;
 
-        unordered_map<string, chrono::time_point<chrono::system_clock>> clientResponseTimes;
+        unique_ptr<GamePreparation> gamePreparation = nullptr;
 
-        /**
-         * Cas, kdy lobby naposledy odeslala zadost klientum, aby si aktualizovali player list
-         */
-        chrono::time_point<chrono::system_clock> lastPlayerListUpdate;
+        unique_ptr<Blackjack> blackjack;
 
     public:
         Lobby(int limit, int id);
 
         int getId() const;
+
+        LobbyState getLobbyState() const;
 
         bool isJoinable() const;
 
@@ -88,17 +89,27 @@ class Lobby {
 
         void addNewMessage(const shared_ptr<TCPData>& message, const shared_ptr<Client>& client);
 
-        void processMessages();
+        void handleLobby();
 
         const vector<shared_ptr<Client>>& getClients() const;
 
-        void updatePlayerResponseTime(const string& username);
+        bool isPlayable();
 
-        bool isTimeToPlay();
+        void initializeGamePrep();
 
-        void startGame();
+        void confirmClient(shared_ptr<Client> client);
 
         void handleGameState();
+
+        bool prepTimeOut();
+
+        void startGame(bool playable);
+
+        void handleHit(const shared_ptr<Client>& client);
+
+        void handleStand(const shared_ptr<Client>& client);
+
+        void returnClientsToLobby(const vector<shared_ptr<Client>>& players);
 };
 
 

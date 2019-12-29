@@ -17,7 +17,7 @@ shared_ptr<Card> Deck::getTop() {
 void Deck::fill() {
     for (auto rank = (Card::Rank) 0; rank != Card::Rank::KING; rank = (Card::Rank) (rank + 1)) {
         for (auto suit = (Card::Suit) 0; suit != Card::Suit::HEARTS; suit = (Card::Suit) (suit + 1)) {
-            cards.push_back(make_shared<Card>(Card(rank, suit)));
+            cards.emplace_back(make_shared<Card>(rank, suit));
         }
     }
 }

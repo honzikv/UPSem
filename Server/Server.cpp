@@ -53,7 +53,7 @@ void Server::selectServer() {
     auto maxSocket = -1;
     timeval timeout;
 
-    cout << "Server is ready to handle clients " << endl;
+    cout << "Server is ready to handle players " << endl;
     while (true) {
         maxSocket = setupFileDescriptors(maxSocket);
 
@@ -136,13 +136,13 @@ void Server::selectServer() {
 
         auto currentTime = chrono::system_clock::now();
         for (const auto& client : clients) {
-            auto timeElapsed = chrono::duration<double, milli>(currentTime - client->getLastMessageReceived()).count();
+            auto durationMillis = chrono::duration<double, milli>(currentTime - client->getLastMessageReceived()).count();
 
-            if (timeElapsed > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
+            if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
                 client->setDisconnected(true);
             }
 
-            if (timeElapsed > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
+            if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
                 removeClient(client);
             }
         }
@@ -228,11 +228,7 @@ bool Server::isLobbyJoinable(int lobbyId) {
 void lobbyFunction(shared_ptr<Lobby> lobby, Server& server) {
 
     while (true) {
-        lobby->processMessages();
-        if (lobby->isTimeToPlay()) {
-            lobby->startGame();
-        }
-
+        lobby->handleLobby();
         lobby->handleGameState();
 
         this_thread::sleep_for(chrono::milliseconds(LOBBY_THREAD_SLEEP_MS));

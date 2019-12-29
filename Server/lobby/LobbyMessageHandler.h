@@ -32,6 +32,12 @@ class LobbyMessageHandler {
         void sendMessage(int socket, const string& message);
 
         void sendUpdatePlayerListRequest(const shared_ptr<Client>& client);
+
+        void sendPrepareGameSceneRequest(const shared_ptr<Client>& client);
+
+        void sendLobbyStartFailed(const shared_ptr<Client>& client);
+
+        void sendPlayerHand(const shared_ptr<Client>& client, bool isDealer);
 };
 
 

@@ -5,52 +5,60 @@
 #ifndef UPSEM_CARD_H
 #define UPSEM_CARD_H
 
+#include <string>
+
+using namespace std;
 
 class Card {
 
-public:
-    /**
-     * Hodnota - Rank karty
-     */
-    enum Rank {
-        ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JOKER, JACK, QUEEN, KING
-    };
 
-    /**
-     * Hodnoty enumu z Rank, pouze pro uzitecnost
-     */
-    static constexpr int rankValues[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10};
+    public:
+        /**
+         * Hodnota - Rank karty
+         */
+        enum Rank {
+            ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JOKER, JACK, QUEEN, KING
+        };
 
-    /**
-     * Barva - Suit karty
-     */
-    enum Suit {
-        CLUBS, DIAMONDS, SPADES, HEARTS
-    };
+        /**
+         * Hodnoty enumu z Rank, pouze pro uzitecnost
+         */
+        static constexpr int rankValues[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10};
 
-private:
-    Rank rank;
+        /**
+         * Barva - Suit karty
+         */
+        enum Suit {
+            CLUBS, DIAMONDS, SPADES, HEARTS
+        };
 
-    Suit suit;
+    private:
+        Rank rank;
 
-    int value;
+        Suit suit;
 
-    bool isRevealed;
+        int value;
+
+        bool isRevealed;
 
 
-public:
+    public:
 
-    Card(Rank rank, Suit suit);
+        Card(Rank rank, Suit suit);
 
-    Rank getRank() const;
+        Rank getRank() const;
 
-    Suit getSuit() const;
+        Suit getSuit() const;
 
-    void setIsRevealed(bool isRevealed);
+        void setIsRevealed(bool isRevealed);
 
-    int getValue() const;
+        string rankToString();
 
-    bool isRevealed1() const;
+        int getValue() const;
+
+        string suitToString();
+
+        string toString();
 };
 
 

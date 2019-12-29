@@ -52,6 +52,7 @@ void MessageHandler::pingBack(int clientSocket) {
         auto message = TCPData(DATATYPE_RESPONSE);
         message.add(RESPONSE, PING);
         sendMessage(clientSocket, message.serialize());
+
     }
     catch (exception& exception) {
         throw exception;
@@ -119,21 +120,21 @@ void MessageHandler::handleResponse(int clientSocket, const shared_ptr<TCPData>&
     auto response = message->valueOf(RESPONSE);
     auto client = server.getClientBySocket(clientSocket);
 
-//    if (client == nullptr) {
-//        cout << "Closing unauthenticated socket" << endl;
-//        server.closeConnection(clientSocket);
-//        return;
-//    }
-//
-//    auto lobby = server.getLobby(client->getLobbyId());
-//
-//    if (lobby == nullptr) {
-//        cout << "Closing incorrect response" << endl;
-//        server.removeClient(client);
-//    }
-//    else {
-//        lobby->addNewMessage(message, client);
-//    }
+    if (client == nullptr) {
+        cout << "Closing unauthenticated socket" << endl;
+        server.closeConnection(clientSocket);
+        return;
+    }
+
+    auto lobby = server.getLobby(client->getLobbyId());
+
+    if (lobby == nullptr) {
+        cout << "Closing incorrect response" << endl;
+        server.removeClient(client);
+    }
+    else {
+        lobby->addNewMessage(message, client);
+    }
 
 }
 

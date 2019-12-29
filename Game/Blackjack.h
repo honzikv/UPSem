@@ -5,29 +5,49 @@
 #ifndef UPSEM_BLACKJACK_H
 #define UPSEM_BLACKJACK_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
-#include "Player.h"
-#include "Deck.h"
-#include "../Server/Server.h"
 #include <memory>
+#include "Deck.h"
+#include "../Server/Client.h"
+#include "Result.h"
 
 using namespace std;
 
 class Blackjack {
 
-    vector<shared_ptr<Player>> players;
+        vector<shared_ptr<Client>> players;
 
-    shared_ptr<Player> dealer;
+        shared_ptr<Client> dealer;
 
-    shared_ptr<Deck> deck;
+        unique_ptr<Deck> deck;
 
-public:
-    void addPlayer(shared_ptr<Player> player);
+        bool gameRunning = true;
 
-    void start();
+        chrono::time_point<chrono::system_clock> gameStart;
 
-    Blackjack();
+    public:
+        explicit Blackjack(const vector<shared_ptr<Client>>& connectedClients);
+
+        shared_ptr<Client> selectDealer();
+
+        void dealCards();
+
+        Result handleHit(const shared_ptr<Client>& player);
+
+        const vector<shared_ptr<Client>>& getPlayers() const;
+
+        const shared_ptr<Client>& getDealer() const;
+
+        bool isGameRunning() const;
+
+        void setGameStartNow();
+
+        bool contains(const shared_ptr<Client>& player);
+
+        void drawCard(const shared_ptr<Client>& client);
+
+        Result handleStand(const shared_ptr<Client>& player);
 };
 
 

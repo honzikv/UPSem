@@ -29,7 +29,13 @@ void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const
     try {
         auto response = message->valueOf(RESPONSE);
 
-        lobby.updatePlayerResponseTime(client->getUsername());
+        if (response == PREPARE_GAME_SCENE) {
+            //pridame klienta do seznamu potvrzenych ucastniku hry
+            lobby.confirmClient(client);
+        }
+        else if (response == INITIAL_HAND) {
+            //todo confirm
+        }
     }
     catch (exception&) {
         //todo kick client
@@ -40,21 +46,32 @@ void LobbyMessageHandler::handleRequest(const shared_ptr<Client>& client, const 
     try {
         auto request = message->valueOf(REQUEST);
 
-        if (request == message->valueOf(VOTE_START)) {
+        if (request == VOTE_START) {
             if (!client->hasVoted()) {
                 client->setHasVoted(true);
             }
             lobby.incrementVotes();
         }
+
+        if (request == HIT) {
+            lobby.handleHit(client);
+        }
+
+        if (request == STAND) {
+            lobby.handleStand(client);
+        }
     }
-    catch (exception&) {}
+    catch (exception&) {
+        cout << "asdaasdasdas" << endl;
+    }
 
 }
 
 LobbyMessageHandler::LobbyMessageHandler(Lobby& lobby) : lobby(lobby) {
 }
 
-void LobbyMessageHandler::sendShowPlayerDisconnectedRequest(const shared_ptr<Client>& client, const string& disconnectedPlayer) {
+void LobbyMessageHandler::sendShowPlayerDisconnectedRequest(const shared_ptr<Client>& client,
+                                                            const string& disconnectedPlayer) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, SHOW_PLAYER_DISCONNECTED);
     message.add(USERNAME, disconnectedPlayer);
@@ -67,7 +84,8 @@ void LobbyMessageHandler::sendMessage(int socket, const string& message) {
     send(socket, message.c_str(), message.size(), 0);
 }
 
-void LobbyMessageHandler::sendShowPlayerConnectedRequest(const shared_ptr<Client>& client, const string& connectedPlayer) {
+void
+LobbyMessageHandler::sendShowPlayerConnectedRequest(const shared_ptr<Client>& client, const string& connectedPlayer) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, SHOW_PLAYER_CONNECTED);
     message.add(USERNAME, connectedPlayer);
@@ -84,6 +102,31 @@ void LobbyMessageHandler::sendUpdatePlayerListRequest(const shared_ptr<Client>& 
         clientNo++;
     }
 
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendPrepareGameSceneRequest(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, PREPARE_GAME_SCENE);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendLobbyStartFailed(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, SHOW_LOBBY_START_FAILED);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendPlayerHand(const shared_ptr<Client>& client, bool isDealer) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, INITIAL_HAND);
+
+    auto playerInfo = client->getPlayerInfo();
+    auto cardNo = 1;
+    for (const auto& card : playerInfo->getHand()) {
+        message.add(CARD + to_string(cardNo), card->toString());
+    }
+    message.add(IS_DEALER, isDealer? TRUE : FALSE);
     sendMessage(client->getClientSocket(), message.serialize());
 }
 

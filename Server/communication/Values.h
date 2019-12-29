@@ -18,5 +18,10 @@
 #define LEAVE_LOBBY "leaveLobby"
 #define SHOW_PLAYER_DISCONNECTED "showPlayerDisconnected"
 #define SHOW_PLAYER_CONNECTED "showPlayerConnected"
+#define PREPARE_GAME_SCENE "prepareGameScene"
+#define SHOW_LOBBY_START_FAILED "showLobbyStartFailed"
+#define INITIAL_HAND "initialHand"
+#define HIT "hit"
+#define STAND "stand"
 
 #endif //UPSEM_VALUES_H

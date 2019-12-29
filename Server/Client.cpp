@@ -66,3 +66,12 @@ void Client::setDisconnected(bool disconnected) {
     Client::disconnected = disconnected;
 }
 
+const shared_ptr<PlayerInfo>& Client::getPlayerInfo() const {
+    return playerInfo;
+}
+
+void Client::clearPlayerInfo() {
+    playerInfo = make_shared<PlayerInfo>();
+}
+
+
