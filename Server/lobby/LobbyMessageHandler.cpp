@@ -27,7 +27,7 @@ void LobbyMessageHandler::handleMessage(const shared_ptr<Client>& client, const 
 void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
     try {
         auto response = message->valueOf(RESPONSE);
-        if (response == PREPARE_GAME_SCENE) {
+        if (response == CONFIRM_PARTICIPATION && lobby.getLobbyState() == LOBBY_STATE_PREPARING) {
             //pridame klienta do seznamu potvrzenych ucastniku hry
             lobby.confirmClient(client);
         } else if (response == UPDATE_BOARD) {
@@ -98,13 +98,13 @@ void LobbyMessageHandler::sendUpdatePlayerListRequest(const shared_ptr<Client>& 
 
 void LobbyMessageHandler::sendPrepareGameSceneRequest(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, PREPARE_GAME_SCENE);
+    message.add(REQUEST, CONFIRM_PARTICIPATION);
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
-void LobbyMessageHandler::sendLobbyStartFailed(const shared_ptr<Client>& client) {
+void LobbyMessageHandler::sendGameStartFailed(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, SHOW_LOBBY_START_FAILED);
+    message.add(REQUEST, SHOW_GAME_START_FAILED);
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
@@ -140,7 +140,7 @@ void LobbyMessageHandler::sendResults(const vector<shared_ptr<Client>>& clients,
     message.add(TOTAL_VALUE, to_string(dealer->getPlayerInfo()->getHandValue()));
 
     auto dealerInfo = dealer->getPlayerInfo();
-    auto playerNo = 1;
+    auto playerNo = 0;
     for (const auto& player : clients) {
         auto clientInfo = player->getPlayerInfo();
         if (dealerInfo->isBusted() && !clientInfo->isBusted()) {
@@ -180,6 +180,20 @@ void LobbyMessageHandler::sendNotYourTurn(const shared_ptr<Client>& client) {
 void LobbyMessageHandler::sendClientDidntConfirm(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, CLIENT_DIDNT_CONFIRM);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendShowLobbyRequest(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, JOIN_LOBBY);
+    message.add(LOBBY_ID, to_string(lobby.getId()));
+
+    auto clientNo = 0;
+    for (const auto& currentClient : lobby.getClients()) {
+        message.add(CLIENT + to_string(clientNo), currentClient->getUsername());
+        clientNo++;
+    }
+
     sendMessage(client->getClientSocket(), message.serialize());
 }
 

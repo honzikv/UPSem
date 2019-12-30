@@ -36,7 +36,6 @@ bool Lobby::addClient(shared_ptr<Client> client) {
     return true;
 }
 
-
 Lobby::Lobby(int limit, int id) : limit(limit), id(id) {
     this->lobbyMessageHandler = make_shared<LobbyMessageHandler>(*this);
 }
@@ -107,6 +106,7 @@ void Lobby::handleLobby() {
         lobbyMessageHandler->handleMessage(message->getClient(), message->getMessage());
     }
 
+
     switch (lobbyState) {
         default:
         case LOBBY_STATE_WAITING:
@@ -123,25 +123,18 @@ void Lobby::handleLobby() {
 
         case LOBBY_STATE_IN_PROGRESS:
             if (!blackjack->isGameRunning()) {
-                returnClientsToLobby();
-                gamePreparation = nullptr;
-                blackjack = nullptr;
+                endGame();
             }
+            handleGameState();
+            break;
 
-            //Pokud uzivatel nereaguje a nezvolil nic, hra za nej zvoli stand
-            auto currentTime = chrono::system_clock::now();
-            auto durationMillis = chrono::duration<double, milli>(
-                    currentTime - blackjack->getLastMessageSent()).count();
-            if (durationMillis > MAX_TIME_BEFORE_STAND_MS) {
-                blackjack->skipPlayer();
-                blackjack->moveToNextPlayer();
-                sendBoardUpdate();
-            }
-
+        case LOBBY_STATE_FINISHED:
+            checkIfReturnToLobby();
             break;
     }
 
 }
+
 
 bool Lobby::isPlayable() {
     if (lobbyState == LOBBY_STATE_IN_PROGRESS) {
@@ -155,7 +148,6 @@ bool Lobby::isPlayable() {
     double voteStartRatio = votedToStart / (double) clients.size();
     return clients.size() > 2 && voteStartRatio > .66;
 }
-
 
 void Lobby::initializeGamePrep() {
     lobbyState = LOBBY_STATE_PREPARING;
@@ -185,10 +177,16 @@ void Lobby::startGame(bool playable) {
 
         //Realisticky bude hrac pouze jeden
         for (const auto& client : gamePreparation->getConfirmedClients()) {
-            lobbyMessageHandler->sendLobbyStartFailed(client);
+            lobbyMessageHandler->sendGameStartFailed(client);
         }
+
+        votedToStart = 0;
+        for (const auto& client : clients) {
+            client->setHasVoted(false);
+        }
+
         lobbyState = LOBBY_STATE_WAITING;
-        joinable = true;
+        joinable = clients.size() < limit;
         return;
     }
 
@@ -210,10 +208,6 @@ void Lobby::startGame(bool playable) {
     lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
 }
 
-void Lobby::returnClientsToLobby() {
-    lobbyMessageHandler->sendResults(blackjack->getPlayers(), blackjack->getDealer());
-}
-
 void Lobby::confirmClient(shared_ptr<Client> client) {
     gamePreparation->addConfirmedClient(client);
 }
@@ -231,6 +225,7 @@ void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<
     if (result != RESULT_NOT_YOUR_TURN) {
         blackjack->moveToNextPlayer();
         lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
+        sendPlayerTurn();
         sendBoardUpdate();
     } else {
         lobbyMessageHandler->sendNotYourTurn(client);
@@ -238,8 +233,47 @@ void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<
 
 }
 
+void Lobby::handleGameState() {
+    //Pokud uzivatel nereaguje a nezvolil nic, hra za nej zvoli stand
+    auto currentTime = chrono::system_clock::now();
+    auto durationMillis = chrono::duration<double, milli>(
+            currentTime - this->blackjack->getLastMessageSent()).count();
+    if (durationMillis > MAX_TIME_BEFORE_STAND_MS) {
+        blackjack->skipPlayer();
+        blackjack->moveToNextPlayer();
+        sendBoardUpdate();
+    }
+}
+
 void Lobby::sendBoardUpdate() {
     for (auto const& player : blackjack->getPlayers()) {
         lobbyMessageHandler->sendBoard(player, blackjack->getPlayers(), blackjack->getDealer());
+    }
+}
+
+void Lobby::endGame() {
+    sendBoardUpdate();
+    lobbyMessageHandler->sendResults(blackjack->getPlayers(), blackjack->getDealer());
+    gamePreparation = nullptr;
+    blackjack = nullptr;
+
+    for (const auto& client : clients) {
+        client->setHasVoted(false);
+        votedToStart = 0;
+    }
+
+    returnToLobbyStart = chrono::system_clock::now();
+}
+
+void Lobby::checkIfReturnToLobby() {
+    auto currentTime = chrono::system_clock::now();
+    auto durationMillis = chrono::duration<double, milli>(currentTime - returnToLobbyStart).count();
+    if (durationMillis >= TIME_BEFORE_RETURN_TO_LOBBY) {
+        lobbyState = LOBBY_STATE_WAITING;
+        joinable = clients.size() < limit;
+
+        for (const auto& client : clients) {
+            lobbyMessageHandler->sendShowLobbyRequest(client);
+        }
     }
 }

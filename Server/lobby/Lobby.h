@@ -66,6 +66,8 @@ class Lobby {
 
         unique_ptr<Blackjack> blackjack;
 
+        chrono::time_point<chrono::system_clock> returnToLobbyStart;
+
     public:
         /**
          * Vychozi konstruktor, vytvori lobby s limitem hracu a id
@@ -177,6 +179,12 @@ class Lobby {
         void handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
 
         void sendBoardUpdate();
+
+        void endGame();
+
+        void handleGameState();
+
+        void checkIfReturnToLobby();
 };
 
 

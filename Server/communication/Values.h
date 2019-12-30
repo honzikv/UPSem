@@ -19,8 +19,8 @@
 #define CLIENT_DIDNT_CONFIRM "clientDidntConfirm"
 #define SHOW_PLAYER_DISCONNECTED "showPlayerDisconnected"
 #define SHOW_PLAYER_CONNECTED "showPlayerConnected"
-#define PREPARE_GAME_SCENE "prepareGameScene"
-#define SHOW_LOBBY_START_FAILED "showLobbyStartFailed"
+#define CONFIRM_PARTICIPATION "confirmParticipation"
+#define SHOW_GAME_START_FAILED "showGameStartFailed"
 #define UPDATE_BOARD "initialHand"
 #define STAND "stand"
 #define TURN "turn"
@@ -30,7 +30,7 @@
 #define SHOW_RESULTS "showResults"
 #define WIN "win"
 #define LOSS "loss"
-#define DEALER_NAME "Dealer"
+#define SHOW_LOBBY "showLobby"
 
 
 #endif //UPSEM_VALUES_H
