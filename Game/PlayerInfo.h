@@ -16,11 +16,7 @@ class PlayerInfo {
 
     vector<shared_ptr<Card>> hand;
 
-    bool busted = false;
-
     bool playing = true;
-
-    bool cardsReceived = false;
 
     public:
         void addCard(shared_ptr<Card> card);

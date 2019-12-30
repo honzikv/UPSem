@@ -229,9 +229,6 @@ void lobbyFunction(shared_ptr<Lobby> lobby, Server& server) {
 
     while (true) {
         lobby->handleLobby();
-        lobby->handleGameState();
-
-        this_thread::sleep_for(chrono::milliseconds(LOBBY_THREAD_SLEEP_MS));
     }
 }
 

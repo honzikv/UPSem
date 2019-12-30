@@ -4,26 +4,12 @@
 
 #include "Card.h"
 
-
-Card::Rank Card::getRank() const {
-    return rank;
-}
-
-Card::Suit Card::getSuit() const {
-    return suit;
-}
-
 Card::Card(Card::Rank rank, Card::Suit suit) : rank(rank), suit(suit) {
-    this->isRevealed = false;
     this->value = rankValues[rank];
 }
 
 int Card::getValue() const {
     return value;
-}
-
-void Card::setIsRevealed(bool isRevealed) {
-    Card::isRevealed = isRevealed;
 }
 
 string Card::toString() {
@@ -66,8 +52,6 @@ string Card::rankToString() {
             return "nine";
         case TEN:
             return "ten";
-        case JOKER:
-            return "joker";
         case JACK:
             return "jack";
         case QUEEN:

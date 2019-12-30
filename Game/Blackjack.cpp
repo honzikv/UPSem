@@ -3,22 +3,15 @@
 //
 
 #include "Blackjack.h"
+#include "Dealer.h"
 
 Blackjack::Blackjack(const vector<shared_ptr<Client>>& connectedClients) {
     for (const auto& client : connectedClients) {
         players.push_back(client);
     }
 
+    dealer = make_shared<Dealer>();
     deck = make_unique<Deck>();
-    dealer = selectDealer();
-    players.erase(remove(players.begin(), players.end(), dealer), players.end());
-}
-
-shared_ptr<Client> Blackjack::selectDealer() {
-    auto randomDevice = random_device();
-    mt19937 engine{randomDevice()};
-    uniform_int_distribution<int> dist(0, players.size() - 1);
-    return players[dist(engine)];
 }
 
 void Blackjack::dealCards() {
@@ -40,10 +33,6 @@ const vector<shared_ptr<Client>>& Blackjack::getPlayers() const {
     return players;
 }
 
-const shared_ptr<Client>& Blackjack::getDealer() const {
-    return dealer;
-}
-
 bool Blackjack::isGameRunning() const {
     return gameRunning;
 }
@@ -52,8 +41,8 @@ void Blackjack::drawCard(const shared_ptr<Client>& client) {
     client->getPlayerInfo()->addCard(deck->getTop());
 }
 
-void Blackjack::setGameStartNow() {
-    lastMessageSent = chrono::system_clock::now();
+void Blackjack::drawCard(const shared_ptr<Dealer>& dealer) {
+    dealer->getPlayerInfo()->addCard(deck->getTop());
 }
 
 bool Blackjack::contains(const shared_ptr<Client>& player) {
@@ -72,7 +61,6 @@ Result Blackjack::handleHit(const shared_ptr<Client>& player) {
 
     drawCard(player);
     auto playerInfo = player->getPlayerInfo();
-
     if (playerInfo->isBusted()) {
         playerInfo->setFinishedPlaying();
         return RESULT_BUSTED;
@@ -93,19 +81,14 @@ Result Blackjack::handleStand(const shared_ptr<Client>& player) {
 
     playerInfo->setFinishedPlaying();
     return RESULT_OK;
-
 }
 
-const shared_ptr<Client>& Blackjack::getCurrentPlayer() {
-    if (currentPlayerIndex == -1) {
-        return dealer;
+shared_ptr<Client> Blackjack::getCurrentPlayer() {
+    if (!gameRunning) {
+        return nullptr;
     }
 
     return players[currentPlayerIndex];
-}
-
-bool Blackjack::isPlayerDealer(const shared_ptr<Client>& player) {
-    return dealer == player;
 }
 
 void Blackjack::moveToNextPlayer() {
@@ -113,7 +96,7 @@ void Blackjack::moveToNextPlayer() {
      * Pokud jsme na konci vektoru s hraci a vsichni dohrali, hraje dealer
      */
     if (currentPlayerIndex == players.size() - 1 && allPlayersFinished()) {
-        dealersPlay();
+        dealerPlay();
     }
 
     for (auto i = currentPlayerIndex; i < players.size(); i++) {
@@ -133,7 +116,7 @@ bool Blackjack::allPlayersFinished() {
     return true;
 }
 
-void Blackjack::dealersPlay() {
+void Blackjack::dealerPlay() {
     //Dokud je ma dealerova ruka hodnotu mensi nez 17 bere si dalsi kartu
     while (dealer->getPlayerInfo()->getHandValue() < DEALER_MAX_DRAW_SUM) {
         drawCard(dealer);
@@ -151,4 +134,8 @@ void Blackjack::updateLastMessageSent() {
 
 void Blackjack::skipPlayer() {
     handleStand(players[currentPlayerIndex]);
+}
+
+const shared_ptr<Dealer>& Blackjack::getDealer() const {
+    return dealer;
 }

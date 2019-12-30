@@ -6,18 +6,21 @@
 #define UPSEM_CARD_H
 
 #include <string>
+#include <vector>
 
 using namespace std;
 
 class Card {
-
-
     public:
         /**
          * Hodnota - Rank karty
          */
         enum Rank {
-            ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JOKER, JACK, QUEEN, KING
+            ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING
+        };
+
+        static constexpr initializer_list<Rank> allRanks = {
+                ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING
         };
 
         /**
@@ -32,6 +35,8 @@ class Card {
             CLUBS, DIAMONDS, SPADES, HEARTS
         };
 
+        static constexpr initializer_list<Suit> allSuits = {CLUBS, DIAMONDS, SPADES, HEARTS};
+
     private:
         Rank rank;
 
@@ -39,18 +44,10 @@ class Card {
 
         int value;
 
-        bool isRevealed;
-
 
     public:
 
         Card(Rank rank, Suit suit);
-
-        Rank getRank() const;
-
-        Suit getSuit() const;
-
-        void setIsRevealed(bool isRevealed);
 
         string rankToString();
 

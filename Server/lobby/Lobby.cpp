@@ -5,7 +5,7 @@
 #include "Lobby.h"
 #include "LobbyMessageHandler.h"
 
-bool Lobby::addClient(const shared_ptr<Client>& client) {
+bool Lobby::addClient(shared_ptr<Client> client) {
     //Teoreticky se nikdy nestane, pouze pro jistotu, ze vector obsahuje unikatni prvky
     if (find(clients.begin(), clients.end(), client) != clients.end()) {
         return false;
@@ -45,7 +45,7 @@ bool Lobby::isJoinable() const {
     return joinable;
 }
 
-string Lobby::getState() {
+string Lobby::toString() {
     return to_string(id) + ";" + to_string(getClientCount()) + ";" + to_string(limit);
 }
 
@@ -62,6 +62,7 @@ int Lobby::getId() const {
 }
 
 bool Lobby::contains(const shared_ptr<Client>& client) {
+    //projde seznam klientu, pokud shared pointer z parametru je shodny s nejakym shared pointerem ze seznamu vrati true
     for (const auto& lobbyClient : clients) {
         if (lobbyClient->getUsername() == client->getUsername()) {
             return true;
@@ -82,11 +83,11 @@ const vector<shared_ptr<Client>>& Lobby::getClients() const {
 void Lobby::removeClient(const shared_ptr<Client>& client) {
     clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
 
-    if (clients.size() < limit) {
+    if (clients.size() < limit && lobbyState == LOBBY_STATE_WAITING) {
         joinable = true;
     }
 
-    //Posle ostatnim klientum, ze se pripojil novy klient
+    //Posle ostatnim klientum, ze se klient odpojil
     for (const auto& otherClient : clients) {
         if (client == otherClient) {
             continue;
@@ -122,17 +123,19 @@ void Lobby::handleLobby() {
 
         case LOBBY_STATE_IN_PROGRESS:
             if (!blackjack->isGameRunning()) {
-                returnClientsToLobby(blackjack->getPlayers());
+                returnClientsToLobby();
+                gamePreparation = nullptr;
+                blackjack = nullptr;
             }
 
+            //Pokud uzivatel nereaguje a nezvolil nic, hra za nej zvoli stand
             auto currentTime = chrono::system_clock::now();
-            auto durationMillis = chrono::duration<double, milli>(currentTime - blackjack->getLastMessageSent()).count();
-
-            if (durationMillis > MAX_TIME_BEFORE_STAND_MS){
+            auto durationMillis = chrono::duration<double, milli>(
+                    currentTime - blackjack->getLastMessageSent()).count();
+            if (durationMillis > MAX_TIME_BEFORE_STAND_MS) {
                 blackjack->skipPlayer();
                 blackjack->moveToNextPlayer();
                 sendBoardUpdate();
-
             }
 
             break;
@@ -164,10 +167,6 @@ void Lobby::initializeGamePrep() {
     gamePreparation = make_unique<GamePreparation>(clients.size());
 }
 
-void Lobby::handleGameState() {
-
-}
-
 bool Lobby::prepTimeOut() {
     if (gamePreparation == nullptr) {
         return true;
@@ -195,15 +194,24 @@ void Lobby::startGame(bool playable) {
 
     joinable = false;
     lobbyState = LOBBY_STATE_IN_PROGRESS;
-    blackjack = make_unique<Blackjack>(gamePreparation->getConfirmedClients());
+
+    auto confirmedClients = gamePreparation->getConfirmedClients();
+    for (const auto& client : clients) {
+        if (!(find(confirmedClients.begin(), confirmedClients.end(), client) != clients.end())) {
+            lobbyMessageHandler->sendClientDidntConfirm(client);
+            removeClient(client);
+        }
+    }
+
+    blackjack = make_unique<Blackjack>(confirmedClients);
     blackjack->dealCards();
 
     sendBoardUpdate();
     lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
 }
 
-void Lobby::returnClientsToLobby(const vector<shared_ptr<Client>>& players) {
-
+void Lobby::returnClientsToLobby() {
+    lobbyMessageHandler->sendResults(blackjack->getPlayers(), blackjack->getDealer());
 }
 
 void Lobby::confirmClient(shared_ptr<Client> client) {
@@ -224,8 +232,7 @@ void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<
         blackjack->moveToNextPlayer();
         lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
         sendBoardUpdate();
-    }
-    else {
+    } else {
         lobbyMessageHandler->sendNotYourTurn(client);
     }
 
@@ -235,5 +242,4 @@ void Lobby::sendBoardUpdate() {
     for (auto const& player : blackjack->getPlayers()) {
         lobbyMessageHandler->sendBoard(player, blackjack->getPlayers(), blackjack->getDealer());
     }
-    lobbyMessageHandler->sendBoard(blackjack->getDealer(), blackjack->getPlayers(), blackjack->getDealer());
 }

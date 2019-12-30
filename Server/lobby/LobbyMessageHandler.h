@@ -37,12 +37,16 @@ class LobbyMessageHandler {
 
         void sendLobbyStartFailed(const shared_ptr<Client>& client);
 
+        void sendClientDidntConfirm(const shared_ptr<Client>& client);
+
         void sendPlayersTurnRequest(const shared_ptr<Client>& client);
 
         void sendBoard(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& players,
-                       const shared_ptr<Client>& dealer);
+                       const shared_ptr<Dealer>& dealer);
 
         void sendNotYourTurn(const shared_ptr<Client>& client);
+
+        void sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer );
 };
 
 

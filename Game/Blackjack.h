@@ -11,6 +11,7 @@
 #include "Deck.h"
 #include "../Server/Client.h"
 #include "Result.h"
+#include "Dealer.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ class Blackjack {
 
         vector<shared_ptr<Client>> players;
 
-        shared_ptr<Client> dealer;
+        shared_ptr<Dealer> dealer;
 
         unique_ptr<Deck> deck;
 
@@ -35,19 +36,15 @@ class Blackjack {
 
         void updateLastMessageSent();
 
-        shared_ptr<Client> selectDealer();
-
         void dealCards();
+
+        const shared_ptr<Dealer>& getDealer() const;
 
         Result handleHit(const shared_ptr<Client>& player);
 
         const vector<shared_ptr<Client>>& getPlayers() const;
 
-        const shared_ptr<Client>& getDealer() const;
-
         bool isGameRunning() const;
-
-        void setGameStartNow();
 
         bool contains(const shared_ptr<Client>& player);
 
@@ -55,9 +52,7 @@ class Blackjack {
 
         Result handleStand(const shared_ptr<Client>& player);
 
-        const shared_ptr<Client>& getCurrentPlayer();
-
-        bool isPlayerDealer(const shared_ptr<Client>& player);
+        shared_ptr<Client> getCurrentPlayer();
 
         bool allPlayersFinished();
 
@@ -65,7 +60,9 @@ class Blackjack {
 
         void skipPlayer();
 
-        void dealersPlay();
+        void dealerPlay();
+
+        void drawCard(const shared_ptr<Dealer>& dealer);
 };
 
 

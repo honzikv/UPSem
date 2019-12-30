@@ -16,6 +16,7 @@
 #define VOTE_START "voteStart"
 #define UPDATE_PLAYER_LIST "updatePlayerList"
 #define LEAVE_LOBBY "leaveLobby"
+#define CLIENT_DIDNT_CONFIRM "clientDidntConfirm"
 #define SHOW_PLAYER_DISCONNECTED "showPlayerDisconnected"
 #define SHOW_PLAYER_CONNECTED "showPlayerConnected"
 #define PREPARE_GAME_SCENE "prepareGameScene"
@@ -24,9 +25,12 @@
 #define STAND "stand"
 #define TURN "turn"
 #define TURN_TYPE "turnType"
-#define PLAYER_HAND "playerHand"
 #define TOTAL_VALUE "totalValue"
 #define NOT_YOUR_TURN "notYourTurn"
+#define SHOW_RESULTS "showResults"
+#define WIN "win"
+#define LOSS "loss"
+#define DEALER_NAME "Dealer"
 
 
 #endif //UPSEM_VALUES_H

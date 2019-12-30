@@ -40,7 +40,7 @@ void MessageHandler::sendLobbyList(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, LOBBY_LIST);
     for (const auto& lobby : server.getLobbies()) {
-        message.add("lobby" + to_string(lobby->getId()), lobby->getState());
+        message.add("lobby" + to_string(lobby->getId()), lobby->toString());
     }
 
     sendMessage(client->getClientSocket(), message.serialize());

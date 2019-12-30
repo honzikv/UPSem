@@ -16,19 +16,21 @@ using namespace std;
 
 class Deck {
 
-    vector<shared_ptr<Card>> cards;
+        vector<shared_ptr<Card>> cards;
 
-public:
-    Deck();
+    public:
+        Deck();
 
-    shared_ptr<Card> getTop();
+        shared_ptr<Card> getTop();
 
-    void shuffle();
+        void shuffle();
 
-    void returnCard(shared_ptr<Card>& cardPtr);
+        void returnCard(shared_ptr<Card>& cardPtr);
 
-private:
-    void fill();
+        int cardsLeft();
+
+    private:
+        void fill();
 
 };
 

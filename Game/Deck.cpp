@@ -6,6 +6,7 @@
 
 Deck::Deck() {
     this->fill();
+    this->shuffle();
 }
 
 shared_ptr<Card> Deck::getTop() {
@@ -14,17 +15,23 @@ shared_ptr<Card> Deck::getTop() {
     return top;
 }
 
+int Deck::cardsLeft() {
+    return cards.size();
+}
+
 void Deck::fill() {
-    for (auto rank = (Card::Rank) 0; rank != Card::Rank::KING; rank = (Card::Rank) (rank + 1)) {
-        for (auto suit = (Card::Suit) 0; suit != Card::Suit::HEARTS; suit = (Card::Suit) (suit + 1)) {
+    auto allRanks = Card::allRanks;
+    auto allSuits = Card::allSuits;
+
+    for (auto suit : allSuits) {
+        for (auto rank : allRanks) {
             cards.emplace_back(make_shared<Card>(rank, suit));
         }
     }
 }
 
 void Deck::shuffle() {
-    auto rng = default_random_engine();
-    ::shuffle(begin(cards), end(cards), rng);
+    ::shuffle(cards.begin(), cards.end(), random_device());
 }
 
 void Deck::returnCard(shared_ptr<Card>& cardPtr) {
