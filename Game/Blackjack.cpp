@@ -37,8 +37,10 @@ bool Blackjack::isGameRunning() const {
     return gameRunning;
 }
 
-void Blackjack::drawCard(const shared_ptr<Client>& client) {
-    client->getPlayerInfo()->addCard(deck->getTop());
+shared_ptr<Card> Blackjack::drawCard(const shared_ptr<Client>& client) {
+    auto card = deck->getTop();
+    client->getPlayerInfo()->addCard(card);
+    return card;
 }
 
 void Blackjack::drawCard(const shared_ptr<Dealer>& dealer) {
@@ -54,33 +56,27 @@ bool Blackjack::contains(const shared_ptr<Client>& player) {
     return false;
 }
 
-Result Blackjack::handleHit(const shared_ptr<Client>& player) {
+shared_ptr<TurnResult> Blackjack::handleHit(const shared_ptr<Client>& player) {
     if (players[currentPlayerIndex] != player) {
-        return RESULT_NOT_YOUR_TURN;
+        return make_shared<TurnResult>(RESULT_NOT_YOUR_TURN, nullptr, player);
     }
 
-    drawCard(player);
+    auto card = drawCard(player);
     auto playerInfo = player->getPlayerInfo();
     if (playerInfo->isBusted()) {
         playerInfo->setFinishedPlaying();
-        return RESULT_BUSTED;
+        return make_shared<TurnResult>(RESULT_BUSTED, card, player);
     }
 
-    return RESULT_OK;
+    return make_shared<TurnResult>(RESULT_OK, card, player);
 }
 
-Result Blackjack::handleStand(const shared_ptr<Client>& player) {
+shared_ptr<TurnResult> Blackjack::handleStand(const shared_ptr<Client>& player) {
     if (!contains(player)) {
-        return RESULT_ERROR;
+        return make_shared<TurnResult>(RESULT_ERROR, nullptr, player);
     }
-
-    auto playerInfo = player->getPlayerInfo();
-    if (playerInfo->isBusted()) {
-        return RESULT_STAND_BUSTED;
-    }
-
-    playerInfo->setFinishedPlaying();
-    return RESULT_OK;
+    player->getPlayerInfo()->setFinishedPlaying();
+    return make_shared<TurnResult>(RESULT_OK, nullptr, player);
 }
 
 shared_ptr<Client> Blackjack::getCurrentPlayer() {

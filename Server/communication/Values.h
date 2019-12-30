@@ -22,6 +22,7 @@
 #define CONFIRM_PARTICIPATION "confirmParticipation"
 #define SHOW_GAME_START_FAILED "showGameStartFailed"
 #define UPDATE_BOARD "initialHand"
+#define HIT "hit"
 #define STAND "stand"
 #define TURN "turn"
 #define TURN_TYPE "turnType"

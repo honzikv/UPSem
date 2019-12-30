@@ -185,6 +185,8 @@ class Lobby {
         void handleGameState();
 
         void checkIfReturnToLobby();
+
+        void sendPlayerTurn(const shared_ptr<TurnResult>& turnResult);
 };
 
 

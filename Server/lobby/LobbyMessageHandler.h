@@ -46,6 +46,8 @@ class LobbyMessageHandler {
 
         void sendNotYourTurn(const shared_ptr<Client>& client);
 
+        void sendPlayerTurn(const shared_ptr<TurnResult>& turnResult, const shared_ptr<Client>& client);
+
         void sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer);
 
         void sendShowLobbyRequest(const shared_ptr<Client>& client);

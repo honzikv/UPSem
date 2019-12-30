@@ -215,17 +215,12 @@ void Lobby::confirmClient(shared_ptr<Client> client) {
 void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
     auto response = message->valueOf(TURN_TYPE);
 
-    Result result;
-    if (response == STAND) {
-        result = blackjack->handleStand(client);
-    } else {
-        result = blackjack->handleHit(client);
-    }
+    auto turnResult = response == STAND ? blackjack->handleStand(client) : blackjack->handleHit(client);
 
-    if (result != RESULT_NOT_YOUR_TURN) {
+    if (turnResult->getResult() != RESULT_NOT_YOUR_TURN) {
         blackjack->moveToNextPlayer();
         lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
-        sendPlayerTurn();
+        sendPlayerTurn(turnResult);
         sendBoardUpdate();
     } else {
         lobbyMessageHandler->sendNotYourTurn(client);
@@ -275,5 +270,11 @@ void Lobby::checkIfReturnToLobby() {
         for (const auto& client : clients) {
             lobbyMessageHandler->sendShowLobbyRequest(client);
         }
+    }
+}
+
+void Lobby::sendPlayerTurn(const shared_ptr<TurnResult>& turnResult) {
+    for (const auto& client : blackjack->getPlayers()) {
+        lobbyMessageHandler->sendPlayerTurn(turnResult, client);
     }
 }

@@ -20,6 +20,7 @@
 #define CARD "C"
 #define PLAYER "P"
 #define DEALER "D"
+#define SHOW_PLAYER_TURN "showPlayerTurn"
 #define RESULT "result"
 
 

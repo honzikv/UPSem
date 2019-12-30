@@ -12,6 +12,7 @@
 #include "../Server/Client.h"
 #include "Result.h"
 #include "Dealer.h"
+#include "TurnResult.h"
 
 using namespace std;
 
@@ -40,7 +41,7 @@ class Blackjack {
 
         const shared_ptr<Dealer>& getDealer() const;
 
-        Result handleHit(const shared_ptr<Client>& player);
+        shared_ptr<TurnResult> handleHit(const shared_ptr<Client>& player);
 
         const vector<shared_ptr<Client>>& getPlayers() const;
 
@@ -48,9 +49,9 @@ class Blackjack {
 
         bool contains(const shared_ptr<Client>& player);
 
-        void drawCard(const shared_ptr<Client>& client);
+        shared_ptr<Card> drawCard(const shared_ptr<Client>& client);
 
-        Result handleStand(const shared_ptr<Client>& player);
+        shared_ptr<TurnResult> handleStand(const shared_ptr<Client>& player);
 
         shared_ptr<Client> getCurrentPlayer();
 

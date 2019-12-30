@@ -197,4 +197,19 @@ void LobbyMessageHandler::sendShowLobbyRequest(const shared_ptr<Client>& client)
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
+void LobbyMessageHandler::sendPlayerTurn(const shared_ptr<TurnResult>& turnResult, const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, SHOW_PLAYER_TURN);
+    message.add(USERNAME,turnResult->getClient()->getUsername());
+    if (turnResult->getCard() == nullptr) {
+        message.add(TURN_TYPE, STAND);
+    }
+    else {
+        message.add(TURN_TYPE, HIT);
+        message.add(CARD,turnResult->getCard()->toString());
+    }
+
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
 
