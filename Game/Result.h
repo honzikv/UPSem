@@ -8,6 +8,7 @@
 
 enum Result {
     RESULT_BUSTED,
+    RESULT_NOT_YOUR_TURN,
     RESULT_ERROR,
     RESULT_STAND_BUSTED,
     RESULT_OK,

@@ -105,11 +105,11 @@ class Lobby {
 
         void startGame(bool playable);
 
-        void handleHit(const shared_ptr<Client>& client);
-
-        void handleStand(const shared_ptr<Client>& client);
-
         void returnClientsToLobby(const vector<shared_ptr<Client>>& players);
+
+        void handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
+
+        void sendBoardUpdate();
 };
 
 

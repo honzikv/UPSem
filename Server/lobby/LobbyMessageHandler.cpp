@@ -28,13 +28,13 @@ void LobbyMessageHandler::handleMessage(const shared_ptr<Client>& client, const 
 void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
     try {
         auto response = message->valueOf(RESPONSE);
-
         if (response == PREPARE_GAME_SCENE) {
             //pridame klienta do seznamu potvrzenych ucastniku hry
             lobby.confirmClient(client);
-        }
-        else if (response == INITIAL_HAND) {
+        } else if (response == UPDATE_BOARD) {
             //todo confirm
+        } else if (response == TURN) {
+            lobby.handlePlayerTurn(client, message);
         }
     }
     catch (exception&) {
@@ -51,14 +51,6 @@ void LobbyMessageHandler::handleRequest(const shared_ptr<Client>& client, const 
                 client->setHasVoted(true);
             }
             lobby.incrementVotes();
-        }
-
-        if (request == HIT) {
-            lobby.handleHit(client);
-        }
-
-        if (request == STAND) {
-            lobby.handleStand(client);
         }
     }
     catch (exception&) {
@@ -117,16 +109,41 @@ void LobbyMessageHandler::sendLobbyStartFailed(const shared_ptr<Client>& client)
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
-void LobbyMessageHandler::sendPlayerHand(const shared_ptr<Client>& client, bool isDealer) {
+void LobbyMessageHandler::sendBoard(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& players,
+                                    const shared_ptr<Client>& dealer) {
     auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, INITIAL_HAND);
+    message.add(REQUEST, UPDATE_BOARD);
 
-    auto playerInfo = client->getPlayerInfo();
-    auto cardNo = 1;
-    for (const auto& card : playerInfo->getHand()) {
-        message.add(CARD + to_string(cardNo), card->toString());
+    auto playerNo = 1;
+    for (const auto& player : players) {
+        message.add(PLAYER + to_string(playerNo), player->getUsername());
+        auto cardNo = 1;
+        for (const auto& card : player->getPlayerInfo()->getHand()) {
+            message.add(PLAYER + to_string(playerNo) + CARD + to_string(cardNo), card->toString());
+            cardNo++;
+        }
+        playerNo++;
     }
-    message.add(IS_DEALER, isDealer? TRUE : FALSE);
+
+    message.add(DEALER, dealer->getUsername());
+    auto cardNo = 1;
+    for (const auto& card : dealer->getPlayerInfo()->getHand()) {
+        message.add(DEALER + to_string(cardNo), card->toString());
+        cardNo++;
+    }
+
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendPlayersTurnRequest(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, TURN);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendNotYourTurn(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, NOT_YOUR_TURN);
     sendMessage(client->getClientSocket(), message.serialize());
 }
 

@@ -4,11 +4,16 @@
 
 #include "PlayerInfo.h"
 
-bool PlayerInfo::isBusted() {
-    auto totalValue = 0;
+int PlayerInfo::getHandValue() {
+    auto value = 0;
     for (const auto& card : hand) {
-        totalValue += card->getValue();
+        value += card->getValue();
     }
+    return value;
+}
+
+bool PlayerInfo::isBusted() {
+    auto totalValue = getHandValue();
     return totalValue >= BLACKJACK;
 }
 
@@ -28,3 +33,8 @@ void PlayerInfo::confirmCardsReceived() {
 void PlayerInfo::setFinishedPlaying() {
     playing = false;
 }
+
+bool PlayerInfo::isPlaying() const {
+    return playing;
+}
+

@@ -31,6 +31,10 @@ class PlayerInfo {
 
         void confirmCardsReceived();
 
+        int getHandValue();
+
+        bool isPlaying() const;
+
         void setFinishedPlaying();
 };
 

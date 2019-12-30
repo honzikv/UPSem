@@ -24,10 +24,16 @@ class Blackjack {
 
         bool gameRunning = true;
 
-        chrono::time_point<chrono::system_clock> gameStart;
+        chrono::time_point<chrono::system_clock> lastMessageSent;
+
+        int currentPlayerIndex = 0;
 
     public:
         explicit Blackjack(const vector<shared_ptr<Client>>& connectedClients);
+
+        const chrono::time_point<chrono::system_clock>& getLastMessageSent() const;
+
+        void updateLastMessageSent();
 
         shared_ptr<Client> selectDealer();
 
@@ -48,6 +54,18 @@ class Blackjack {
         void drawCard(const shared_ptr<Client>& client);
 
         Result handleStand(const shared_ptr<Client>& player);
+
+        const shared_ptr<Client>& getCurrentPlayer();
+
+        bool isPlayerDealer(const shared_ptr<Client>& player);
+
+        bool allPlayersFinished();
+
+        void moveToNextPlayer();
+
+        void skipPlayer();
+
+        void dealersPlay();
 };
 
 

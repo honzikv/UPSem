@@ -27,20 +27,20 @@ void Card::setIsRevealed(bool isRevealed) {
 }
 
 string Card::toString() {
-    return suitToString() + ";" + rankToString() + ";" + to_string(value);
+    return suitToString() + ";" + rankToString();
 }
 
 string Card::suitToString() {
     switch (suit) {
         case CLUBS:
-            return "clubs";
+            return "C";
         case DIAMONDS:
-            return "diamonds";
+            return "D";
         case SPADES:
-            return "spades";
+            return "S";
         default:
         case HEARTS:
-            return "hearts";
+            return "H";
     }
 }
 

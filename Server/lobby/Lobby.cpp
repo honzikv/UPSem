@@ -6,14 +6,20 @@
 #include "LobbyMessageHandler.h"
 
 bool Lobby::addClient(const shared_ptr<Client>& client) {
+    //Teoreticky se nikdy nestane, pouze pro jistotu, ze vector obsahuje unikatni prvky
     if (find(clients.begin(), clients.end(), client) != clients.end()) {
         return false;
     }
 
+    /*
+     * Prida klienta do lobby a nastavi mu lobbyId a ze je v lobby - aby se pri nahlem odpojeni vratil do lobby pokud se
+     * hra odstartovala
+     */
     clients.push_back(client);
     client->setLobbyId(id);
     client->setInLobby(true);
 
+    //Pokud je limit hracu naplnen, nastavi lobby jako not joinable
     if (clients.size() == limit) {
         joinable = false;
     }
@@ -101,6 +107,7 @@ void Lobby::handleLobby() {
     }
 
     switch (lobbyState) {
+        default:
         case LOBBY_STATE_WAITING:
             if (isPlayable()) {
                 initializeGamePrep();
@@ -117,6 +124,18 @@ void Lobby::handleLobby() {
             if (!blackjack->isGameRunning()) {
                 returnClientsToLobby(blackjack->getPlayers());
             }
+
+            auto currentTime = chrono::system_clock::now();
+            auto durationMillis = chrono::duration<double, milli>(currentTime - blackjack->getLastMessageSent()).count();
+
+            if (durationMillis > MAX_TIME_BEFORE_STAND_MS){
+                blackjack->skipPlayer();
+                blackjack->moveToNextPlayer();
+                sendBoardUpdate();
+
+            }
+
+            break;
     }
 
 }
@@ -174,14 +193,13 @@ void Lobby::startGame(bool playable) {
         return;
     }
 
+    joinable = false;
     lobbyState = LOBBY_STATE_IN_PROGRESS;
     blackjack = make_unique<Blackjack>(gamePreparation->getConfirmedClients());
     blackjack->dealCards();
 
-    for (auto const& player : blackjack->getPlayers()) {
-        lobbyMessageHandler->sendPlayerHand(player, false);
-    }
-    lobbyMessageHandler->sendPlayerHand(blackjack->getDealer(), true);
+    sendBoardUpdate();
+    lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
 }
 
 void Lobby::returnClientsToLobby(const vector<shared_ptr<Client>>& players) {
@@ -192,14 +210,30 @@ void Lobby::confirmClient(shared_ptr<Client> client) {
     gamePreparation->addConfirmedClient(client);
 }
 
-void Lobby::handleHit(const shared_ptr<Client>& client) {
-    auto result = blackjack->handleHit(client);
+void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
+    auto response = message->valueOf(TURN_TYPE);
 
-    if (result == RESULT_OK) {
-
+    Result result;
+    if (response == STAND) {
+        result = blackjack->handleStand(client);
+    } else {
+        result = blackjack->handleHit(client);
     }
+
+    if (result != RESULT_NOT_YOUR_TURN) {
+        blackjack->moveToNextPlayer();
+        lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
+        sendBoardUpdate();
+    }
+    else {
+        lobbyMessageHandler->sendNotYourTurn(client);
+    }
+
 }
 
-void Lobby::handleStand(const shared_ptr<Client> &client) {
-
+void Lobby::sendBoardUpdate() {
+    for (auto const& player : blackjack->getPlayers()) {
+        lobbyMessageHandler->sendBoard(player, blackjack->getPlayers(), blackjack->getDealer());
+    }
+    lobbyMessageHandler->sendBoard(blackjack->getDealer(), blackjack->getPlayers(), blackjack->getDealer());
 }

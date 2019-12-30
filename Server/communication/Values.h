@@ -20,8 +20,13 @@
 #define SHOW_PLAYER_CONNECTED "showPlayerConnected"
 #define PREPARE_GAME_SCENE "prepareGameScene"
 #define SHOW_LOBBY_START_FAILED "showLobbyStartFailed"
-#define INITIAL_HAND "initialHand"
-#define HIT "hit"
+#define UPDATE_BOARD "initialHand"
 #define STAND "stand"
+#define TURN "turn"
+#define TURN_TYPE "turnType"
+#define PLAYER_HAND "playerHand"
+#define TOTAL_VALUE "totalValue"
+#define NOT_YOUR_TURN "notYourTurn"
+
 
 #endif //UPSEM_VALUES_H

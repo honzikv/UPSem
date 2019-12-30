@@ -16,8 +16,10 @@
 #define LOBBY_ID "lobbyId"
 #define REMOVE_FROM_LOBBY "removeFromLobby"
 #define CLIENT "client"
-#define CARD "card"
+#define CARD "C"
 #define IS_DEALER "isDealer"
+#define PLAYER "P"
+#define DEALER "D"
 
 
 #endif //UPSEM_FIELDS_H

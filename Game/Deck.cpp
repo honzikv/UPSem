@@ -24,7 +24,7 @@ void Deck::fill() {
 
 void Deck::shuffle() {
     auto rng = default_random_engine();
-    ::shuffle(std::begin(cards), std::end(cards), rng);
+    ::shuffle(begin(cards), end(cards), rng);
 }
 
 void Deck::returnCard(shared_ptr<Card>& cardPtr) {

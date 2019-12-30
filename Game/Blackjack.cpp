@@ -53,12 +53,12 @@ void Blackjack::drawCard(const shared_ptr<Client>& client) {
 }
 
 void Blackjack::setGameStartNow() {
-    gameStart = chrono::system_clock::now();
+    lastMessageSent = chrono::system_clock::now();
 }
 
 bool Blackjack::contains(const shared_ptr<Client>& player) {
     for (const auto& ingamePlayer : players) {
-        if (ingamePlayer == player) {
+        if (ingamePlayer == player && ingamePlayer.get() == player.get()) {
             return true;
         }
     }
@@ -66,16 +66,18 @@ bool Blackjack::contains(const shared_ptr<Client>& player) {
 }
 
 Result Blackjack::handleHit(const shared_ptr<Client>& player) {
-    if (!contains(player)) {
-        return RESULT_ERROR;
+    if (players[currentPlayerIndex] != player) {
+        return RESULT_NOT_YOUR_TURN;
     }
 
     drawCard(player);
     auto playerInfo = player->getPlayerInfo();
 
     if (playerInfo->isBusted()) {
+        playerInfo->setFinishedPlaying();
         return RESULT_BUSTED;
     }
+
     return RESULT_OK;
 }
 
@@ -92,4 +94,61 @@ Result Blackjack::handleStand(const shared_ptr<Client>& player) {
     playerInfo->setFinishedPlaying();
     return RESULT_OK;
 
+}
+
+const shared_ptr<Client>& Blackjack::getCurrentPlayer() {
+    if (currentPlayerIndex == -1) {
+        return dealer;
+    }
+
+    return players[currentPlayerIndex];
+}
+
+bool Blackjack::isPlayerDealer(const shared_ptr<Client>& player) {
+    return dealer == player;
+}
+
+void Blackjack::moveToNextPlayer() {
+    /*
+     * Pokud jsme na konci vektoru s hraci a vsichni dohrali, hraje dealer
+     */
+    if (currentPlayerIndex == players.size() - 1 && allPlayersFinished()) {
+        dealersPlay();
+    }
+
+    for (auto i = currentPlayerIndex; i < players.size(); i++) {
+        if (players[i]->getPlayerInfo()->isPlaying()) {
+            currentPlayerIndex = i;
+            break;
+        }
+    }
+}
+
+bool Blackjack::allPlayersFinished() {
+    for (const auto& player : players) {
+        if (player->getPlayerInfo()->isPlaying()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void Blackjack::dealersPlay() {
+    //Dokud je ma dealerova ruka hodnotu mensi nez 17 bere si dalsi kartu
+    while (dealer->getPlayerInfo()->getHandValue() < DEALER_MAX_DRAW_SUM) {
+        drawCard(dealer);
+    }
+    gameRunning = false;
+}
+
+const chrono::time_point<chrono::system_clock>& Blackjack::getLastMessageSent() const {
+    return lastMessageSent;
+}
+
+void Blackjack::updateLastMessageSent() {
+    lastMessageSent = chrono::system_clock::now();
+}
+
+void Blackjack::skipPlayer() {
+    handleStand(players[currentPlayerIndex]);
 }
