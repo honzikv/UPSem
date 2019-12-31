@@ -129,15 +129,16 @@ void LobbyMessageHandler::sendResults(const vector<shared_ptr<Client>>& clients,
     auto playerNo = 0;
     for (const auto& player : clients) {
         auto clientInfo = player->getPlayerInfo();
-        if (dealerInfo->isBusted() && !clientInfo->isBusted()) {
-            message.add(PLAYER + to_string(playerNo), WIN);
-        } else if (dealerInfo->isBusted() && clientInfo->isBusted()) {
-            message.add(PLAYER + to_string(playerNo), LOSS);
+        if (dealerInfo->isBusted()) {
+            message.add(PLAYER + to_string(playerNo), !clientInfo->isBusted() ? WIN : LOSS);
         } else {
-            message.add(PLAYER + to_string(playerNo),
-                        dealerInfo->getHandValue() > clientInfo->getHandValue() ? LOSS : WIN);
+            if (clientInfo->isBusted() || clientInfo->getHandValue() <= dealerInfo->getHandValue()) {
+                message.add(PLAYER + to_string(playerNo),LOSS);
+            }
+            else {
+                message.add(PLAYER + to_string(playerNo), WIN);
+            }
         }
-
         playerNo++;
     }
 

@@ -14,7 +14,7 @@ int PlayerInfo::getHandValue() {
 
 bool PlayerInfo::isBusted() {
     auto totalValue = getHandValue();
-    return totalValue >= BLACKJACK;
+    return totalValue > BLACKJACK;
 }
 
 void PlayerInfo::addCard(shared_ptr<Card> card) {
