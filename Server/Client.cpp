@@ -3,6 +3,7 @@
 //
 
 #include "Client.h"
+#include "communication/Values.h"
 
 
 Client::Client(string id, int fileDescriptor) : username(std::move(id)), clientSocket(fileDescriptor) {
@@ -26,12 +27,12 @@ bool Client::operator!=(const Client& anotherClient) const {
     return !(anotherClient == *this);
 }
 
-bool Client::hasVoted() const {
-    return voted;
+bool Client::isReady() const {
+    return ready;
 }
 
-void Client::setHasVoted(bool hasVoted) {
-    Client::voted = hasVoted;
+void Client::setReady(bool ready) {
+    Client::ready = ready;
 }
 
 void Client::setClientSocket(int clientSocket) {
@@ -72,6 +73,11 @@ const shared_ptr<PlayerInfo>& Client::getPlayerInfo() const {
 
 void Client::clearPlayerInfo() {
     playerInfo = make_shared<PlayerInfo>();
+}
+
+string Client::toString() {
+    auto isReady = ready ? " READY" : " NOT READY";
+    return string(getUsername() + isReady);
 }
 
 

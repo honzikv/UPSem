@@ -19,16 +19,12 @@ bool PlayerInfo::isBusted() {
 
 void PlayerInfo::addCard(shared_ptr<Card> card) {
     hand.push_back(card);
-    cardsReceived = false;
 }
 
 const vector<shared_ptr<Card>>& PlayerInfo::getHand() const {
     return hand;
 }
 
-void PlayerInfo::confirmCardsReceived() {
-    cardsReceived = true;
-}
 
 void PlayerInfo::setFinishedPlaying() {
     playing = false;

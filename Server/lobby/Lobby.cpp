@@ -41,7 +41,7 @@ Lobby::Lobby(int limit, int id) : limit(limit), id(id) {
 }
 
 bool Lobby::isJoinable() const {
-    return joinable;
+    return lobbyState == LOBBY_STATE_WAITING && clients.size() < limit;
 }
 
 string Lobby::toString() {
@@ -53,7 +53,7 @@ int Lobby::getClientCount() {
 }
 
 void Lobby::incrementVotes() {
-    Lobby::votedToStart += 1;
+    Lobby::clientsReady += 1;
 }
 
 int Lobby::getId() const {
@@ -72,7 +72,7 @@ bool Lobby::contains(const shared_ptr<Client>& client) {
 }
 
 void Lobby::addNewMessage(const shared_ptr<TCPData>& message, const shared_ptr<Client>& client) {
-    unprocessedMessages.emplace_back(make_shared<ClientData>(message, client));
+    unprocessedMessages.emplace(make_shared<ClientData>(message, client));
 }
 
 const vector<shared_ptr<Client>>& Lobby::getClients() const {
@@ -97,15 +97,17 @@ void Lobby::removeClient(const shared_ptr<Client>& client) {
 
     client->setLobbyId(-1);
     client->setInLobby(false);
+    client->setReady(false);
 
     cout << "Client " << client->getUsername() << " left lobby " << id << endl;
 }
 
 void Lobby::handleLobby() {
-    for (const auto& message : unprocessedMessages) {
+    while (!unprocessedMessages.empty()) {
+        auto message = unprocessedMessages.front();
+        unprocessedMessages.pop();
         lobbyMessageHandler->handleMessage(message->getClient(), message->getMessage());
     }
-
 
     switch (lobbyState) {
         default:
@@ -137,16 +139,11 @@ void Lobby::handleLobby() {
 
 
 bool Lobby::isPlayable() {
-    if (lobbyState == LOBBY_STATE_IN_PROGRESS) {
+    if (lobbyState != LOBBY_STATE_WAITING) {
         return false;
     }
 
-    if (clients.size() == 2 && votedToStart == 2) {
-        return true;
-    }
-
-    double voteStartRatio = votedToStart / (double) clients.size();
-    return clients.size() > 2 && voteStartRatio > .66;
+    return clients.size() >= 2 && clients.size() == clientsReady;
 }
 
 void Lobby::initializeGamePrep() {
@@ -165,8 +162,8 @@ bool Lobby::prepTimeOut() {
     }
 
     auto currentTime = chrono::system_clock::now();
-    auto durationMillis = chrono::duration<double, milli>(
-            currentTime - gamePreparation->getInitializationTime()).count();
+    auto durationMillis = chrono::duration<double, milli>(currentTime - gamePreparation->getInitializationTime())
+            .count();
     return durationMillis >= LOBBY_PREP_TIME_MS;
 }
 
@@ -180,9 +177,9 @@ void Lobby::startGame(bool playable) {
             lobbyMessageHandler->sendGameStartFailed(client);
         }
 
-        votedToStart = 0;
+        clientsReady = 0;
         for (const auto& client : clients) {
-            client->setHasVoted(false);
+            client->setReady(false);
         }
 
         lobbyState = LOBBY_STATE_WAITING;
@@ -203,7 +200,6 @@ void Lobby::startGame(bool playable) {
 
     blackjack = make_unique<Blackjack>(confirmedClients);
     blackjack->dealCards();
-
     sendBoardUpdate();
     lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
 }
@@ -214,7 +210,6 @@ void Lobby::confirmClient(shared_ptr<Client> client) {
 
 void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
     auto response = message->valueOf(TURN_TYPE);
-
     auto turnResult = response == STAND ? blackjack->handleStand(client) : blackjack->handleHit(client);
 
     if (turnResult->getResult() != RESULT_NOT_YOUR_TURN) {
@@ -253,8 +248,8 @@ void Lobby::endGame() {
     blackjack = nullptr;
 
     for (const auto& client : clients) {
-        client->setHasVoted(false);
-        votedToStart = 0;
+        client->setReady(false);
+        clientsReady = 0;
     }
 
     returnToLobbyStart = chrono::system_clock::now();
@@ -277,4 +272,20 @@ void Lobby::sendPlayerTurn(const shared_ptr<TurnResult>& turnResult) {
     for (const auto& client : blackjack->getPlayers()) {
         lobbyMessageHandler->sendPlayerTurn(turnResult, client);
     }
+}
+
+LobbyState Lobby::getLobbyState() const {
+    return lobbyState;
+}
+
+bool Lobby::reconnectClient(const shared_ptr<Client>& client) {
+    if (!this->contains(client)) {
+        return false;
+    }
+
+    if (blackjack->getCurrentPlayer() == client) {
+        lobbyMessageHandler->sendBoard(client, blackjack->getPlayers(), blackjack->getDealer());
+        lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
+    }
+    return true;
 }

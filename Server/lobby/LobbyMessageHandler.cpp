@@ -45,11 +45,15 @@ void LobbyMessageHandler::handleRequest(const shared_ptr<Client>& client, const 
     try {
         auto request = message->valueOf(REQUEST);
 
-        if (request == VOTE_START) {
-            if (!client->hasVoted()) {
-                client->setHasVoted(true);
+        if (request == SEND_READY) {
+            if (!client->isReady()) {
+                client->setReady(true);
+                for (const auto& lobbyClient : lobby.getClients()) {
+                    sendUpdatePlayerListRequest(client);
+                }
             }
             lobby.incrementVotes();
+            cout << "incremented votes" << endl;
         }
     }
     catch (exception&) {
@@ -89,7 +93,7 @@ void LobbyMessageHandler::sendUpdatePlayerListRequest(const shared_ptr<Client>& 
 
     auto clientNo = 0;
     for (const auto& currentClient : lobby.getClients()) {
-        message.add(CLIENT + to_string(clientNo), currentClient->getUsername());
+        message.add(CLIENT + to_string(clientNo), currentClient->toString());
         clientNo++;
     }
 
@@ -127,7 +131,7 @@ void LobbyMessageHandler::sendBoard(const shared_ptr<Client>& client, const vect
     message.add(PLAYER_COUNT, to_string(players.size()));
     auto cardNo = 0;
     for (const auto& card : dealer->getPlayerInfo()->getHand()) {
-        message.add(DEALER + to_string(cardNo), card->toString());
+        message.add(DEALER + string(CARD) + to_string(cardNo), card->toString());
         cardNo++;
     }
 
@@ -200,13 +204,12 @@ void LobbyMessageHandler::sendShowLobbyRequest(const shared_ptr<Client>& client)
 void LobbyMessageHandler::sendPlayerTurn(const shared_ptr<TurnResult>& turnResult, const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, SHOW_PLAYER_TURN);
-    message.add(USERNAME,turnResult->getClient()->getUsername());
+    message.add(USERNAME, turnResult->getClient()->getUsername());
     if (turnResult->getCard() == nullptr) {
         message.add(TURN_TYPE, STAND);
-    }
-    else {
+    } else {
         message.add(TURN_TYPE, HIT);
-        message.add(CARD,turnResult->getCard()->toString());
+        message.add(CARD, turnResult->getCard()->toString());
     }
 
     sendMessage(client->getClientSocket(), message.serialize());

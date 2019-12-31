@@ -27,25 +27,24 @@ class Client {
         /**
          * Cislo socketu klienta
          */
-        atomic<int> clientSocket;
+        int clientSocket;
 
         /**
-         * Flag, zda-li uzivatel volil pro start hry, pokud alespon 50% uzivatelu volilo pro start lobby automaticky
-         * spusti hru
+         * Flag, zda-li uzivatel zvolil ze je pripraven pro start hry
          */
-        atomic<bool> voted = false;
+        bool ready = false;
 
         /**
          * Urcuje, zda-li je hrac disconnected
          */
-        atomic<bool> disconnected = false;
+        bool disconnected = false;
 
         /**
          * Flag pro server pro zjisteni, zda-li ma s klientem komunikovat
          */
-        atomic<bool> inLobby = false;
+        bool inLobby = false;
 
-        atomic<int> lobbyId = -1;
+        int lobbyId = -1;
 
         chrono::time_point<chrono::system_clock> lastMessageReceived;
 
@@ -53,6 +52,8 @@ class Client {
 
     public:
         Client(string id, int fileDescriptor);
+
+        string toString();
 
         int getLobbyId() const;
 
@@ -64,7 +65,7 @@ class Client {
 
         void setClientSocket(int clientSocket);
 
-        bool hasVoted() const;
+        bool isReady() const;
 
         bool operator==(const Client& anotherClient) const;
 
@@ -74,7 +75,7 @@ class Client {
 
         int getClientSocket() const;
 
-        void setHasVoted(bool hasVoted);
+        void setReady(bool hasVoted);
 
         void updateLastMessageReceived();
 

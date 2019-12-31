@@ -4,7 +4,7 @@
 
 #ifndef UPSEM_LOBBY_H
 #define UPSEM_LOBBY_H
-#define MAX_CLIENTS_PER_LOBBY 7
+#define MAX_CLIENTS_PER_LOBBY 6
 
 #include <cstdlib>
 #include <vector>
@@ -12,6 +12,9 @@
 #include <thread>
 #include <algorithm>
 #include <atomic>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 #include "../Client.h"
 #include "LobbyState.h"
 #include "../serialization/TCPData.h"
@@ -27,7 +30,7 @@ using namespace std;
 
 class Lobby {
 
-        vector<shared_ptr<ClientData>> unprocessedMessages;
+        queue<shared_ptr<ClientData>> unprocessedMessages;
 
         /**
          * Seznam vsech klientu
@@ -38,7 +41,7 @@ class Lobby {
          * Flag, zda-li je lobby joinable, tzn. pokud uzivatel zazada o pripojeni do teto lobby, tak bude pripojen ci
          * nikoliv
          */
-        atomic<bool> joinable = true;
+        bool joinable = true;
 
         /**
          * Limit hracu
@@ -53,7 +56,7 @@ class Lobby {
         /**
          * Pocet uzivatelu, kteri volili pro brzky start hry
          */
-        atomic<int> votedToStart = 0;
+        int clientsReady = 0;
 
         LobbyState lobbyState = LOBBY_STATE_WAITING;
 
@@ -170,6 +173,8 @@ class Lobby {
          * Vrati klienty po dohrani hry do lobby
          */
         void returnClientsToLobby();
+
+        bool reconnectClient(const shared_ptr<Client>& client);
 
         /**
          *

@@ -10,7 +10,6 @@ Server::Server(int port, int lobbyCount) : port(port) {
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
     }
-    createThreads();
     this->messageHandler = make_shared<MessageHandler>(*this);
     selectServer();
 }
@@ -100,7 +99,6 @@ void Server::selectServer() {
                         }
 
                         for (const auto& messageFromBuffer : messageVector) {
-                            cout << messageFromBuffer << endl;
                             auto message = make_shared<TCPData>(messageFromBuffer);
                             messageHandler->handleMessage(clientSocket, message);
                         }
@@ -145,6 +143,10 @@ void Server::selectServer() {
             if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
                 removeClient(client);
             }
+        }
+
+        for (const auto& lobby : lobbies) {
+            lobby->handleLobby();
         }
     }
 }
@@ -204,17 +206,6 @@ const vector<shared_ptr<Lobby>>& Server::getLobbies() {
     return lobbies;
 }
 
-bool Server::isLoginUnique(const string& username) {
-
-    for (const auto& client : clients) {
-        if (client->getUsername() == username) {
-            return false;
-        }
-    }
-    return true;
-
-}
-
 bool Server::isLobbyJoinable(int lobbyId) {
 
     for (const auto& lobby : lobbies) {
@@ -229,18 +220,19 @@ void lobbyFunction(shared_ptr<Lobby> lobby, Server& server) {
 
     while (true) {
         lobby->handleLobby();
+        this_thread::sleep_for(chrono::milliseconds(1));
     }
 }
 
-void Server::createThreads() {
-
-    auto& server = *this;
-    for (const auto& lobbySharedPtr : lobbies) {
-        auto lobbyThread = thread(lobbyFunction, lobbySharedPtr, ref(server));
-        lobbyThread.detach();
-        lobbyThreads.push_back(move(lobbyThread));
-    }
-}
+//void Server::createThreads() {
+//
+//    auto& server = *this;
+//    for (const auto& lobbySharedPtr : lobbies) {
+//        auto lobbyThread = thread(lobbyFunction, lobbySharedPtr, ref(server));
+//        lobbyThread.detach();
+//        lobbyThreads.push_back(move(lobbyThread));
+//    }
+//}
 
 void Server::registerClient(const string& username, int clientSocket) {
     clients.push_back(make_unique<Client>(username, clientSocket));

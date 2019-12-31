@@ -2,15 +2,8 @@
 
 int main() {
 
-//    auto server = make_shared<Server>(4431, 5);
-//
-//    return EXIT_SUCCESS;
+    auto server = make_shared<Server>(4431, 5);
 
-    auto deck = Deck();
+    return EXIT_SUCCESS;
 
-    for (auto i = 0; i < 52; i++) {
-        auto card = deck.getTop();
-        cout << card->toString() << " " << card->getValue() << endl;
-    }
-    cout << deck.cardsLeft() << endl;
 }
