@@ -52,9 +52,10 @@ int Lobby::getClientCount() {
     return clients.size();
 }
 
-void Lobby::incrementVotes() {
+void Lobby::incrementPlayersReady() {
     Lobby::clientsReady += 1;
 }
+
 
 int Lobby::getId() const {
     return id;
@@ -126,8 +127,9 @@ void Lobby::handleLobby() {
         case LOBBY_STATE_IN_PROGRESS:
             if (!blackjack->isGameRunning()) {
                 endGame();
+            } else {
+                handleGameState();
             }
-            handleGameState();
             break;
 
         case LOBBY_STATE_FINISHED:
@@ -148,7 +150,6 @@ bool Lobby::isPlayable() {
 
 void Lobby::initializeGamePrep() {
     lobbyState = LOBBY_STATE_PREPARING;
-    joinable = false;
 
     for (auto const& client : clients) {
         lobbyMessageHandler->sendPrepareGameSceneRequest(client);
@@ -168,7 +169,6 @@ bool Lobby::prepTimeOut() {
 }
 
 void Lobby::startGame(bool playable) {
-
     if (!playable) {
         cout << "Lobby " << id << " could not start, not enough active players " << endl;
 
@@ -187,7 +187,6 @@ void Lobby::startGame(bool playable) {
         return;
     }
 
-    joinable = false;
     lobbyState = LOBBY_STATE_IN_PROGRESS;
 
     auto confirmedClients = gamePreparation->getConfirmedClients();
@@ -202,6 +201,7 @@ void Lobby::startGame(bool playable) {
     blackjack->dealCards();
     sendBoardUpdate();
     lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
+    blackjack->updateLastMessageSent();
 }
 
 void Lobby::confirmClient(shared_ptr<Client> client) {
@@ -217,6 +217,7 @@ void Lobby::handlePlayerTurn(const shared_ptr<Client>& client, const shared_ptr<
         lobbyMessageHandler->sendPlayersTurnRequest(blackjack->getCurrentPlayer());
         sendPlayerTurn(turnResult);
         sendBoardUpdate();
+        blackjack->updateLastMessageSent();
     } else {
         lobbyMessageHandler->sendNotYourTurn(client);
     }
@@ -253,6 +254,7 @@ void Lobby::endGame() {
     }
 
     returnToLobbyStart = chrono::system_clock::now();
+    lobbyState = LOBBY_STATE_FINISHED;
 }
 
 void Lobby::checkIfReturnToLobby() {

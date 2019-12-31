@@ -64,6 +64,8 @@ class Blackjack {
         void dealerPlay();
 
         void drawCard(const shared_ptr<Dealer>& dealer);
+
+        void setLastMessageSent(const chrono::time_point<chrono::system_clock>& lastMessageSent);
 };
 
 

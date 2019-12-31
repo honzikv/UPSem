@@ -7,59 +7,41 @@
 #include "../communication/Values.h"
 
 void LobbyMessageHandler::handleMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
+    auto dataTypeFieldValue = message->valueOf(DATA_TYPE);
 
-    try {
-        auto dataTypeFieldValue = message->valueOf(DATA_TYPE);
-
-        if (dataTypeFieldValue == RESPONSE) {
-            handleResponse(client, message);
-        } else {
-            handleRequest(client, message);
-        }
-    }
-    catch (exception&) {
-        //todo kick client
-        cout << "sdgsdgs" << endl;
+    if (dataTypeFieldValue == RESPONSE) {
+        handleResponse(client, message);
+    } else {
+        handleRequest(client, message);
     }
 
 }
 
 void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
-    try {
-        auto response = message->valueOf(RESPONSE);
-        if (response == CONFIRM_PARTICIPATION && lobby.getLobbyState() == LOBBY_STATE_PREPARING) {
-            //pridame klienta do seznamu potvrzenych ucastniku hry
-            lobby.confirmClient(client);
-        } else if (response == UPDATE_BOARD) {
-            //todo confirm
-        } else if (response == TURN) {
-            lobby.handlePlayerTurn(client, message);
-        }
+    auto response = message->valueOf(RESPONSE);
+    if (response == CONFIRM_PARTICIPATION && lobby.getLobbyState() == LOBBY_STATE_PREPARING) {
+        //pridame klienta do seznamu potvrzenych ucastniku hry
+        lobby.confirmClient(client);
+    } else if (response == UPDATE_BOARD) {
+        //todo confirm
+    } else if (response == TURN) {
+        lobby.handlePlayerTurn(client, message);
     }
-    catch (exception&) {
-        //todo kick client
-    }
+
 }
 
 void LobbyMessageHandler::handleRequest(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
-    try {
-        auto request = message->valueOf(REQUEST);
-
-        if (request == SEND_READY) {
-            if (!client->isReady()) {
-                client->setReady(true);
-                for (const auto& lobbyClient : lobby.getClients()) {
-                    sendUpdatePlayerListRequest(client);
-                }
+    auto request = message->valueOf(REQUEST);
+    if (request == SEND_READY) {
+        if (!client->isReady()) {
+            client->setReady(true);
+            for (const auto& lobbyClient : lobby.getClients()) {
+                sendUpdatePlayerListRequest(client);
             }
-            lobby.incrementVotes();
-            cout << "incremented votes" << endl;
         }
+        lobby.incrementPlayersReady();
+        cout << "incremented votes" << endl;
     }
-    catch (exception&) {
-        cout << "asdaasdasdas" << endl;
-    }
-
 }
 
 LobbyMessageHandler::LobbyMessageHandler(Lobby& lobby) : lobby(lobby) {

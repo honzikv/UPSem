@@ -2,6 +2,7 @@
 // Created by itznukeey on 27.11.19.
 //
 
+#include <iostream>
 #include "Blackjack.h"
 #include "Dealer.h"
 
@@ -88,6 +89,7 @@ shared_ptr<Client> Blackjack::getCurrentPlayer() {
 }
 
 void Blackjack::moveToNextPlayer() {
+    cout << "moving to next player" << endl;
     /*
      * Pokud jsme na konci vektoru s hraci a vsichni dohrali, hraje dealer
      */
@@ -98,6 +100,7 @@ void Blackjack::moveToNextPlayer() {
     for (auto i = currentPlayerIndex; i < players.size(); i++) {
         if (players[i]->getPlayerInfo()->isPlaying()) {
             currentPlayerIndex = i;
+            cout << "current player " << i << endl;
             break;
         }
     }
@@ -123,6 +126,7 @@ void Blackjack::dealerPlay() {
 const chrono::time_point<chrono::system_clock>& Blackjack::getLastMessageSent() const {
     return lastMessageSent;
 }
+
 
 void Blackjack::updateLastMessageSent() {
     lastMessageSent = chrono::system_clock::now();

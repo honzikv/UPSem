@@ -113,7 +113,7 @@ class Lobby {
         /**
          * Zvysi pocet hlasu pro start o jedna
          */
-        void incrementVotes();
+        void incrementPlayersReady();
 
         /**
          * Vrati, zda-li lobby obsahuje klienta
