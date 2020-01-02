@@ -1,0 +1,19 @@
+//
+// Created by nvk on 12/29/2019.
+//
+
+#ifndef UPSEM_RESULT_H
+#define UPSEM_RESULT_H
+
+
+enum Result {
+    RESULT_NOT_YOUR_TURN,
+    RESULT_HIT_AFTER_DOUBLE,
+    RESULT_BUSTED,
+    RESULT_DOUBLE_BUSTED,
+    RESULT_OK,
+    RESULT_DOUBLE_OK,
+};
+
+
+#endif //UPSEM_RESULT_H
