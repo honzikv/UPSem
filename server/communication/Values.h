@@ -5,15 +5,20 @@
 #ifndef UPSEM_VALUES_H
 #define UPSEM_VALUES_H
 
+#define PING "ping"
+#define REQUEST "request"
+#define RESPONSE "response"
 #define LOGIN "login"
 #define LOBBY_LIST "lobbyList"
 #define JOIN_LOBBY "joinLobby"
 #define TRUE "true"
 #define FALSE "false"
-#define PING "ping"
 #define CONNECTION_CLOSED "connectionClosed"
-#define REQUEST "request"
-#define RESPONSE "response"
+#define LOBBY_LIST "lobbyList"
+#define LOBBY "lobby"
+#define GAME "game"
+
+
 #define SEND_READY "sendReady"
 #define UPDATE_PLAYER_LIST "updatePlayerList"
 #define LEAVE_LOBBY "leaveLobby"
@@ -39,7 +44,8 @@
 #define WIN "win"
 #define LOSS "loss"
 #define TIE "tie"
-#define SHOW_LOBBY "showLobby"
+#define SHOW_RETURN_TO_LOBBY "showReturnToLobby"
+#define SHOW_PLAYER_RECONNECTED "showPlayerReconnected"
 
 
 #endif //UPSEM_VALUES_H

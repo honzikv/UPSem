@@ -4,8 +4,13 @@
 
 #include "LobbyMessageHandler.h"
 #include "../../lobby/controller/GameController.h"
-#include "../Fields.h"
-#include "../Values.h"
+
+LobbyMessageHandler::LobbyMessageHandler(Lobby& lobby) : lobby(lobby) {
+}
+
+void LobbyMessageHandler::sendMessage(int socket, const string& message) {
+    send(socket, message.c_str(), message.size(), 0);
+}
 
 void LobbyMessageHandler::handleMessage(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
     auto dataTypeFieldValue = message->valueOf(DATA_TYPE);
@@ -15,7 +20,6 @@ void LobbyMessageHandler::handleMessage(const shared_ptr<Client>& client, const 
     } else {
         handleRequest(client, message);
     }
-
 }
 
 void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
@@ -33,16 +37,10 @@ void LobbyMessageHandler::handleRequest(const shared_ptr<Client>& client, const 
     if (request == SEND_READY) {
         if (!client->isReady()) {
             client->setReady(true);
-            for (const auto& lobbyClient : lobby.getClients()) {
-                sendUpdatePlayerListRequest(client);
-            }
+            sendUpdatePlayerListRequest();
             lobby.incrementPlayersReady();
         }
-        cout << "incremented votes" << endl;
     }
-}
-
-LobbyMessageHandler::LobbyMessageHandler(Lobby& lobby) : lobby(lobby) {
 }
 
 void LobbyMessageHandler::sendShowPlayerDisconnectedRequest(const shared_ptr<Client>& client,
@@ -53,11 +51,6 @@ void LobbyMessageHandler::sendShowPlayerDisconnectedRequest(const shared_ptr<Cli
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
-void LobbyMessageHandler::sendMessage(int socket, const string& message) {
-    cout << message;
-    //todo exception handling
-    send(socket, message.c_str(), message.size(), 0);
-}
 
 void
 LobbyMessageHandler::sendShowPlayerConnectedRequest(const shared_ptr<Client>& client, const string& connectedPlayer) {
@@ -67,98 +60,37 @@ LobbyMessageHandler::sendShowPlayerConnectedRequest(const shared_ptr<Client>& cl
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
-void LobbyMessageHandler::sendUpdatePlayerListRequest(const shared_ptr<Client>& client) {
+void LobbyMessageHandler::sendUpdatePlayerListRequest() {
+    auto serializedMessage = playerListSerializedString();
+    for (const auto& currentClient : lobby.getClients()) {
+        sendMessage(currentClient->getClientSocket(), serializedMessage);
+    }
+}
+
+void LobbyMessageHandler::sendClientPlayerList(const shared_ptr<Client>& client) {
+    sendMessage(client->getClientSocket(), playerListSerializedString());
+}
+
+string LobbyMessageHandler::playerListSerializedString() {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, UPDATE_PLAYER_LIST);
 
     auto clientNo = 0;
-    for (const auto& currentClient : lobby.getClients()) {
-        message.add(CLIENT + to_string(clientNo), currentClient->toString());
+    for (const auto& client : lobby.getClients()) {
+        message.add(CLIENT + to_string(clientNo), client->toString());
         clientNo++;
     }
-
-    sendMessage(client->getClientSocket(), message.serialize());
+    return message.serialize();
 }
 
-void LobbyMessageHandler::sendConfirmParticipationRequest(const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, CONFIRM_PARTICIPATION);
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void LobbyMessageHandler::sendGameStartFailed(const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, SHOW_GAME_START_FAILED);
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void LobbyMessageHandler::sendBoard(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& players,
-                                    const shared_ptr<Dealer>& dealer) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, UPDATE_BOARD);
-
-    auto playerNo = 0;
-    for (const auto& player : players) {
-        message.add(PLAYER + to_string(playerNo), player->getUsername());
-        message.add(PLAYER + to_string(playerNo) + TOTAL_VALUE, to_string(player->getPlayerInfo()->getSoftHandValue()));
-        auto cardNo = 0;
-        for (const auto& card : player->getPlayerInfo()->getHand()) {
-            message.add(PLAYER + to_string(playerNo) + CARD + to_string(cardNo), card->toString());
-            cardNo++;
+void LobbyMessageHandler::sendUpdatePlayerListRequest(const shared_ptr<Client>& exclude) {
+    auto serializedMessage = playerListSerializedString();
+    for (const auto& currentClient : lobby.getClients()) {
+        if (exclude == currentClient) {
+            continue;
         }
-        playerNo++;
+        sendMessage(currentClient->getClientSocket(), serializedMessage);
     }
-    message.add(PLAYER_COUNT, to_string(players.size()));
-    auto cardNo = 0;
-    for (const auto& card : dealer->getPlayerInfo()->getHand()) {
-        message.add(DEALER + string(CARD) + to_string(cardNo), card->toString());
-        cardNo++;
-    }
-
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void LobbyMessageHandler::sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, SHOW_RESULTS);
-    message.add(TOTAL_VALUE, to_string(dealer->getPlayerInfo()->getSoftHandValue()));
-
-    auto dealerInfo = dealer->getPlayerInfo();
-    auto playerNo = 0;
-    for (const auto& player : clients) {
-        auto clientInfo = player->getPlayerInfo();
-        if (dealerInfo->isBusted()) {
-            message.add(PLAYER + to_string(playerNo), !clientInfo->isBusted() ? WIN : LOSS);
-        } else {
-            if (clientInfo->isBusted() || clientInfo->getSoftHandValue() <= dealerInfo->getSoftHandValue()) {
-                message.add(PLAYER + to_string(playerNo), LOSS);
-            } else {
-                message.add(PLAYER + to_string(playerNo), WIN);
-            }
-        }
-        playerNo++;
-    }
-
-    auto serializedMessage = message.serialize();
-    for (const auto& player : clients) {
-        sendMessage(player->getClientSocket(), serializedMessage);
-    }
-}
-
-void LobbyMessageHandler::sendPlayersTurnRequest(const shared_ptr<Client>& client) {
-    if (client == nullptr) {
-        return;
-    }
-
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, TURN);
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void LobbyMessageHandler::sendNotYourTurn(const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, NOT_YOUR_TURN);
-    sendMessage(client->getClientSocket(), message.serialize());
 }
 
 void LobbyMessageHandler::sendClientDidntConfirm(const shared_ptr<Client>& client) {
@@ -180,19 +112,3 @@ void LobbyMessageHandler::sendShowLobbyRequest(const shared_ptr<Client>& client)
 
     sendMessage(client->getClientSocket(), message.serialize());
 }
-
-void LobbyMessageHandler::sendPlayerTurn(const shared_ptr<TurnResult>& turnResult, const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, SHOW_PLAYER_TURN);
-    message.add(USERNAME, turnResult->getClient()->getUsername());
-    if (turnResult->getCard() == nullptr) {
-        message.add(TURN_TYPE, STAND);
-    } else {
-        message.add(TURN_TYPE, HIT);
-        message.add(CARD, turnResult->getCard()->toString());
-    }
-
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-
-

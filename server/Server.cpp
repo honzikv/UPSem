@@ -86,7 +86,7 @@ void Server::selectServer() {
 
                 if (readResult <= 0) {
                     //pokud je vysledek 0 - End of Stream nebo -1 Exception, uzavreme socket
-                    cerr << "Client was disconnected" << endl;
+                    cout << "Client was disconnected" << endl;
                     closeConnection(clientSocket);
                 } else {
                     //jinak predame zpravu message handleru
@@ -139,10 +139,15 @@ void Server::selectServer() {
                 client->setClientSocket(-1);
 
                 auto lobby = getLobby(client->getLobbyId());
-                if (lobby != nullptr && lobby->getLobbyState() != LOBBY_STATE_IN_GAME) {
-                    lobby->removeClient(client);
+                if (lobby == nullptr) {
+                    continue;
                 }
-                else {
+
+                auto lobbyState = lobby->getLobbyState();
+                if (lobbyState == LOBBY_STATE_WAITING
+                    || (lobbyState == LOBBY_STATE_PREPARING && !lobby->hasClientConfirmedToPlay(client))) {
+                    lobby->removeClient(client);
+                } else {
                     lobby->sendClientDisconnected(client);
                 }
             }
@@ -152,15 +157,23 @@ void Server::selectServer() {
         /*
          * Detekce, ze se klient odpojil se provede pomoci timeoutu - klient posila kazdych par sekund ping aby udrzel
          * spojeni se serverem + jine pozadavky. Po uplynuti timeoutu se u klienta nastavi pole disconnected na true,
-         * pokud se neozve do delsi doby, jsou veskera data o klientovi odstranena - jinak pokud se klient znovu pripoji,
-         * tak se mu obnovi stav - napr pokud byl ve hre
+         * pokud se neozve do delsi doby, jsou veskera data o klientovi odstranena.
          */
         auto currentTime = chrono::system_clock::now();
         for (const auto& client : clients) {
-            auto durationMillis = chrono::duration<double, milli>(currentTime - client->getLastMessageReceived()).count();
+            auto durationMillis = chrono::duration<double, milli>(
+                    currentTime - client->getLastMessageReceived()).count();
 
             if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
                 client->setDisconnected(true);
+            }
+
+            auto clientLobby = getLobby(client->getLobbyId());
+
+            if (clientLobby != nullptr && (clientLobby->getLobbyState() == LOBBY_STATE_IN_GAME ||
+                                           clientLobby->getLobbyState()
+                                           == LOBBY_STATE_FINISHED)) {
+                continue;
             }
 
             if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
@@ -255,7 +268,6 @@ void Server::closeConnection(int clientSocket) {
 }
 
 void Server::removeClient(const shared_ptr<Client>& client) {
-    clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
 
     if (client->getClientSocket() != -1) {
         close(client->getClientSocket());
@@ -264,9 +276,10 @@ void Server::removeClient(const shared_ptr<Client>& client) {
     }
 
     //Pokud je nahodou klient v lobby odstranime ho z lobby
-    if (client->isInLobby() && getLobby(client->getLobbyId()) != nullptr) {
+    if (getLobby(client->getLobbyId()) != nullptr) {
         getLobby(client->getLobbyId())->removeClient(client);
     }
+    clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
     cout << "data of client " << client->getUsername() << " has been removed" << endl;
 }
 

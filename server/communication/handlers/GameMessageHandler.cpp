@@ -24,10 +24,13 @@ void GameMessageHandler::sendBoard(const shared_ptr<Client>& client, const vecto
 
     auto playerNo = 0;
     for (const auto& player : players) {
+        auto playerInfo = player->getPlayerInfo();
         message.add(PLAYER + to_string(playerNo), player->getUsername());
         message.add(PLAYER + to_string(playerNo) + TOTAL_VALUE,
-                    to_string(player->getPlayerInfo()->getSoftHandValue()) + " : " +
-                    to_string(player->getPlayerInfo()->getHardHandValue()));
+                    to_string(playerInfo->getHardHandValue()) + ";" +
+                    to_string(playerInfo->getSoftHandValue()));
+        message.add(PLAYER + to_string(playerNo) + BET, to_string(playerInfo->getBet()));
+
         auto cardNo = 0;
         for (const auto& card : player->getPlayerInfo()->getHand()) {
             message.add(PLAYER + to_string(playerNo) + CARD + to_string(cardNo), card->toString());
@@ -103,12 +106,14 @@ GameMessageHandler::sendPlayerTurnResult(const shared_ptr<TurnResult>& turnResul
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
-void GameMessageHandler::sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer) {
+string GameMessageHandler::getSerializedGameResult(const vector<shared_ptr<Client>>& clients,
+                                                   const shared_ptr<Dealer>& dealer) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, SHOW_RESULTS);
-    message.add(TOTAL_VALUE, to_string(dealer->getPlayerInfo()->getSoftHandValue()));
 
     auto dealerInfo = dealer->getPlayerInfo();
+    message.add(TOTAL_VALUE,
+                to_string(dealerInfo->getHardHandValue()) + ";" + to_string(dealerInfo->getSoftHandValue()));
     auto playerNo = 0;
 
     for (const auto& player : clients) {
@@ -146,20 +151,37 @@ void GameMessageHandler::sendResults(const vector<shared_ptr<Client>>& clients, 
             }
         }
 
-        message.add(PLAYER + to_string(playerNo) + BET, to_string(amountBet) + " : " + to_string((int) amountWon));
+        message.add(PLAYER + to_string(playerNo) + BET, to_string(amountBet) + ";" + to_string((int) amountWon));
         playerNo++;
     }
+    return message.serialize();
+}
 
-    auto serializedMessage = message.serialize();
+void GameMessageHandler::sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer) {
+    auto serializedMessage = getSerializedGameResult(clients, dealer);
     for (const auto& player : clients) {
         sendMessage(player->getClientSocket(), serializedMessage);
-        sendShowMessage(player, "Game has finished, you will be returned to lobby soon");
+        sendGameFinished(player);
     }
 }
 
-void GameMessageHandler::sendShowMessage(const shared_ptr<Client>& client, const string& message) {
-    auto request = TCPData(DATATYPE_REQUEST);
-    request.add(REQUEST, SHOW_MESSAGE);
-    request.add(SHOW_MESSAGE, message);
-    sendMessage(client->getClientSocket(), request.serialize());
+void GameMessageHandler::sendResults(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& clients,
+                                     const shared_ptr<Dealer>& dealer) {
+    auto serializedMessage = getSerializedGameResult(clients, dealer);
+    sendMessage(client->getClientSocket(), serializedMessage);
+}
+
+void GameMessageHandler::sendGameFinished(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, SHOW_RETURN_TO_LOBBY);
+    auto timeBeforeReturnSec = (int) (TIME_BEFORE_RETURN_TO_LOBBY / 1e3);
+    message.add(TIME, to_string(timeBeforeReturnSec));
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void GameMessageHandler::sendShowPlayerReconnected(const shared_ptr<Client>& client, const string& username) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, SHOW_PLAYER_RECONNECTED);
+    message.add(USERNAME, username);
+    sendMessage(client->getClientSocket(), message.serialize());
 }

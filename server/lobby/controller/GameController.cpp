@@ -23,7 +23,7 @@ void GameController::cancelGame() {
 void GameController::startGame() {
 
     for (const auto& client : lobby.getClients()) {
-        if (!this->contains(client)) {
+        if (!this->containsConfirmedClient(client)) {
             lobby.removeClient(client);
             lobby.sendClientDidntConfirm(client);
         }
@@ -83,8 +83,12 @@ void GameController::handlePlayerTurn(const shared_ptr<Client>& client, const sh
     } else if (turnResult->getResult() == RESULT_HIT_AFTER_DOUBLE) {
         gameMessageHandler->sendDoubleDownAfterHit(client);
     } else {
-        gameMessageHandler->sendPlayerTurnResult(turnResult, client);
-        gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
+        for (const auto& player : blackjack->getPlayers()) {
+            gameMessageHandler->sendPlayerTurnResult(turnResult, player);
+        }
+        if (!isGameFinished()) {
+            gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
+        }
         sendBoardUpdate();
     }
 }
@@ -113,34 +117,39 @@ bool GameController::isPlayable() {
     return confirmedClients.size() >= 2;
 }
 
-bool GameController::hasGameFinished() {
+bool GameController::isGameFinished() {
     return !blackjack->isGameRunning();
 }
 
 void GameController::endGame() {
+    cout << "ending game" << endl;
     sendBoardUpdate();
     gameMessageHandler->sendResults(blackjack->getPlayers(), blackjack->getDealer());
-
-
-    blackjack = nullptr;
-    confirmedClients.clear();
     lobby.setLobbyState(LOBBY_STATE_FINISHED);
     lobby.prepareToReturn();
 }
 
-void GameController::reconnectClient(const shared_ptr<Client>& client) {
-    gameMessageHandler->sendBoard(client, blackjack->getPlayers(), blackjack->getDealer());
-    if (blackjack->getCurrentPlayer() == client) {
-        gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
-    }
+void GameController::removeData() {
+    blackjack = nullptr;
+    confirmedClients.clear();
+}
 
-    auto message = "Player " + client->getUsername() + " has reconnected.";
-    for (const auto& player : confirmedClients) {
-        gameMessageHandler->sendShowMessage(player, message);
+void GameController::reconnectClient(const shared_ptr<Client>& client) {
+    if (!isGameFinished()) {
+        gameMessageHandler->sendBoard(client, blackjack->getPlayers(), blackjack->getDealer());
+        if (blackjack->getCurrentPlayer() == client) {
+            gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
+        }
+        for (const auto& player : confirmedClients) {
+            gameMessageHandler->sendShowPlayerReconnected(player, client->getUsername());
+        }
+    } else {
+        gameMessageHandler->sendBoard(client, blackjack->getPlayers(), blackjack->getDealer());
+        gameMessageHandler->sendResults(client, blackjack->getPlayers(), blackjack->getDealer());
     }
 }
 
-bool GameController::contains(const shared_ptr<Client>& client) {
+bool GameController::containsConfirmedClient(const shared_ptr<Client>& client) {
     for (const auto& player : confirmedClients) {
         if (player == client) {
             return true;

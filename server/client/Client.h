@@ -59,10 +59,6 @@ class Client {
 
         void setLobbyId(int lobbyId);
 
-        bool isInLobby() const;
-
-        void setInLobby(bool inLobby);
-
         void setClientSocket(int clientSocket);
 
         bool isReady() const;

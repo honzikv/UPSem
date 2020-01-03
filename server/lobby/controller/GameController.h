@@ -52,11 +52,13 @@ class GameController {
 
         void endGame();
 
-        bool hasGameFinished();
+        bool isGameFinished();
 
         bool hasPreparationTimeExpired();
 
-        bool contains(const shared_ptr<Client>& client);
+        bool containsConfirmedClient(const shared_ptr<Client>& client);
+
+        void removeData();
 };
 
 

@@ -49,13 +49,14 @@ class MessageHandler {
 
         void leaveLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message);
 
-        void sendClientReconnected(const shared_ptr<Client>& client);
+        void restoreClientState(const shared_ptr<Client>& client);
 
         void sendClientReconnectedFromAnotherLocation(int clientSocket);
 
         void handleLogin(int clientSocket, const shared_ptr<TCPData>& message);
 
         void sendGameFinished(const shared_ptr<Client>& client);
+
 };
 
 

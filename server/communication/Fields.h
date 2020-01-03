@@ -10,7 +10,7 @@
 #define RESPONSE "response"
 #define USERNAME "username"
 #define LOBBY_ID "lobbyId"
-#define IS_NEW "isNew"
+#define RESTORE_STATE "restoreState"
 #define IS_JOINABLE "isJoinable"
 #define DATA_TYPE "dataType"
 #define LOBBY_ID "lobbyId"
@@ -24,6 +24,7 @@
 #define SHOW_PLAYER_TURN "showPlayerTurn"
 #define RESULT "result"
 #define BET "bet"
+#define TIME "time"
 
 
 #endif //UPSEM_FIELDS_H

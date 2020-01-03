@@ -82,6 +82,8 @@ class Lobby {
 
         void setLobbyState(LobbyState lobbyState);
 
+        void restoreState(const shared_ptr<Client>& client, TCPData& request);
+
         bool isJoinable() const;
 
         /**
@@ -89,7 +91,7 @@ class Lobby {
          * @param client shared pointer klienta
          * @return zda-li se klient pridal
          */
-        bool addClient(shared_ptr<Client> client);
+        void addClient(shared_ptr<Client> client);
 
         /**
          * Odstrani shared pointer na instanci klienta z lobby
@@ -123,6 +125,8 @@ class Lobby {
          */
         bool contains(const shared_ptr<Client>& client);
 
+        bool hasClientConfirmedToPlay(const shared_ptr<Client>& client);
+
         /**
          * Prida na frontu novou zpravu ke zpracovani
          * @param message zprava, kterou ma lobby zpracovat
@@ -146,8 +150,6 @@ class Lobby {
         bool reconnectClient(const shared_ptr<Client>& client);
 
         void sendClientDisconnected(const shared_ptr<Client>& client);
-
-        void sendClientReconnected(const shared_ptr<Client>& client);
 
         void checkIfReturnToLobby();
 

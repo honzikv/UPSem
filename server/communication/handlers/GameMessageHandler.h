@@ -22,32 +22,38 @@ class GameMessageHandler {
 
         GameController& gameController;
 
-        void sendMessage(int clientSocket, const string& message);
+        static void sendMessage(int clientSocket, const string& message);
 
     public:
         explicit GameMessageHandler(GameController& gameController);
 
-        void sendConfirmParticipationRequest(const shared_ptr<Client>& client);
+        static void sendConfirmParticipationRequest(const shared_ptr<Client>& client);
 
-        void sendGameCouldNotStart(const shared_ptr<Client>& client);
+        static void sendGameCouldNotStart(const shared_ptr<Client>& client);
 
-        void sendBoard(const shared_ptr<Client>& player, const vector<shared_ptr<Client>>& players,
+        static void sendBoard(const shared_ptr<Client>& player, const vector<shared_ptr<Client>>& players,
                        const shared_ptr<Dealer>& dealer);
 
-        void sendPlayerTurnRequest(const shared_ptr<Client>& client);
+        static void sendPlayerTurnRequest(const shared_ptr<Client>& client);
 
-        void sendCurrentPlayer(const shared_ptr<Client>& client, const string& username);
+        static void sendCurrentPlayer(const shared_ptr<Client>& client, const string& username);
 
-        void sendNotYourTurn(const shared_ptr<Client>& client);
+        static void sendNotYourTurn(const shared_ptr<Client>& client);
 
-        void sendPlayerTurnResult(const shared_ptr<TurnResult>& turnResult, const shared_ptr<Client>& client);
+        static void sendPlayerTurnResult(const shared_ptr<TurnResult>& turnResult, const shared_ptr<Client>& client);
 
-        void sendDoubleDownAfterHit(const shared_ptr<Client>& client);
+        static void sendDoubleDownAfterHit(const shared_ptr<Client>& client);
 
-        void sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer);
+        static void sendResults(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer);
 
-        void sendShowMessage(const shared_ptr<Client>& client, const string& message);
+        static void sendGameFinished(const shared_ptr<Client>& client);
 
+        static void sendShowPlayerReconnected(const shared_ptr<Client>& client, const string& username);
+
+        static string getSerializedGameResult(const vector<shared_ptr<Client>>& clients, const shared_ptr<Dealer>& dealer);
+
+        void sendResults(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& clients,
+                         const shared_ptr<Dealer>& dealer);
 };
 
 

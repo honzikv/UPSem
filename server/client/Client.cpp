@@ -39,14 +39,6 @@ void Client::setClientSocket(int clientSocket) {
     Client::clientSocket = clientSocket;
 }
 
-bool Client::isInLobby() const {
-    return inLobby;
-}
-
-void Client::setInLobby(bool inLobby) {
-    Client::inLobby = inLobby;
-}
-
 int Client::getLobbyId() const {
     return lobbyId;
 }

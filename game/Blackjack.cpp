@@ -16,6 +16,7 @@ Blackjack::Blackjack(const vector<shared_ptr<Client>>& connectedClients) {
 }
 
 void Blackjack::dealCards() {
+
     for (const auto& player : players) {
         auto playerInfo = player->getPlayerInfo();
 
@@ -100,7 +101,8 @@ void Blackjack::moveToNextPlayer() {
 }
 
 void Blackjack::dealerPlay() {
-    //Dokud je ma dealerova ruka hodnotu mensi nez 17 bere si dalsi kartu
+    //Dokud je ma dealerova ruka hodnotu mensi nez 17 pro mekky soucet bere si dalsi kartu
+    cout << "dealer is playing" << endl;
     while (dealer->getPlayerInfo()->getSoftHandValue() < DEALER_MAX_DRAW_SUM) {
         drawCard(dealer);
     }
@@ -108,8 +110,12 @@ void Blackjack::dealerPlay() {
 }
 
 shared_ptr<Client> Blackjack::getCurrentPlayer() {
-    return players[currentPlayerIndex];
+    if (isGameRunning()) {
+        return players[currentPlayerIndex];
+    }
+    else return nullptr;
 }
+
 
 void Blackjack::skipPlayer() {
     handleStand(players[currentPlayerIndex]);

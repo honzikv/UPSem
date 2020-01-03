@@ -3,6 +3,7 @@
 //
 
 #include "MessageHandler.h"
+#include "../../lobby/controller/GameController.h"
 #include "../Values.h"
 #include "../Fields.h"
 #include "../../Server.h"
@@ -50,6 +51,12 @@ void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& 
     } else {
         auto client = server.getClientBySocket(clientSocket);
 
+        if (client == nullptr) {
+            cout << "Closing unauthenticated socket" << endl;
+            server.closeConnection(clientSocket);
+            return;
+        }
+
         if (request == LOBBY_LIST) {
             //posle lobby list
             sendLobbyList(client);
@@ -58,9 +65,11 @@ void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& 
             sendLobby(client, message);
         } else if (request == LEAVE_LOBBY) {
             leaveLobby(client, message);
-        } else if (client->isInLobby()) {
+        } else if (client->getLobbyId() != -1) {
             auto lobby = server.getLobby(client->getLobbyId());
-            lobby->addNewMessage(message, client);
+            if (lobby != nullptr) {
+                lobby->addNewMessage(message, client);
+            }
         }
 
         client->updateLastMessageReceived();
@@ -70,18 +79,21 @@ void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& 
 void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& message) {
     auto username = message->valueOf(USERNAME);
     auto client = server.getClientByUsername(username);
+
+    //Pokud instance klienta k loginu neexistuje vytvorime novy
     if (client == nullptr) {
         server.registerClient(username, clientSocket);
         sendLoginIsNew(clientSocket);
         cout << "Welcome \"" << username << "\" on the server " << endl;
     } else {
+        //Jinak odpojime predchozi pripojeni (pokud nebylo odpojeno)
         client = this->server.getClientByUsername(username);
         if (client->getClientSocket() != -1) {
             sendClientReconnectedFromAnotherLocation(client->getClientSocket());
             server.closeConnection(client->getClientSocket());
         }
         client->setClientSocket(clientSocket);
-        sendClientReconnected(client);
+        restoreClientState(client);
         client->updateLastMessageReceived();
         cout << "Client \"" << username << "\" was reconnected " << endl;
     }
@@ -90,7 +102,6 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
 void MessageHandler::sendLoginIsNew(int clientSocket) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, LOGIN);
-    message.add(IS_NEW, TRUE);
     sendMessage(clientSocket, message.serialize());
 }
 
@@ -149,14 +160,20 @@ void MessageHandler::leaveLobby(shared_ptr<Client>& client, const shared_ptr<TCP
     sendMessage(client->getClientSocket(), response.serialize());
 }
 
-void MessageHandler::sendClientReconnected(const shared_ptr<Client>& client) {
+void MessageHandler::restoreClientState(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, LOGIN);
-    message.add(IS_NEW, FALSE);
-    message.add(IN_GAME, FALSE);
 
     auto lobby = server.getLobby(client->getLobbyId());
-    if (client->isInLobby() && lobby != nullptr && lobby->getLobbyState() == LOBBY_STATE_IN_GAME) {
+    if (lobby == nullptr || !lobby->contains(client)) {
+        message.add(RESTORE_STATE, LOBBY_LIST);
+        sendMessage(client->getClientSocket(), message.serialize());
+        sendLobbyList(client);
+    } else {
+        lobby->restoreState(client, message);
+    }
+
+    if (lobby != nullptr && lobby->getLobbyState() == LOBBY_STATE_IN_GAME) {
         if (!lobby->reconnectClient(client)) {
             sendGameFinished(client);
             sendMessage(client->getClientSocket(), message.serialize());
@@ -170,8 +187,7 @@ void MessageHandler::sendClientReconnected(const shared_ptr<Client>& client) {
 
 void MessageHandler::sendClientReconnectedFromAnotherLocation(int clientSocket) {
     auto message = TCPData(DATATYPE_REQUEST);
-    message.add(RESPONSE, LOGIN);
-    message.add(LOGIN, CONNECTION_CLOSED);
+    message.add(REQUEST, CONNECTION_CLOSED);
     sendMessage(clientSocket, message.serialize());
 }
 
@@ -180,3 +196,4 @@ void MessageHandler::sendGameFinished(const shared_ptr<Client>& client) {
     message.add(REQUEST, REMOVED_FROM_LOBBY);
     sendMessage(client->getClientSocket(), message.serialize());
 }
+
