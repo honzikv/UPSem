@@ -62,8 +62,8 @@ LobbyMessageHandler::sendShowPlayerConnectedRequest(const shared_ptr<Client>& cl
 
 void LobbyMessageHandler::sendUpdatePlayerListRequest() {
     auto serializedMessage = playerListSerializedString();
-    for (const auto& currentClient : lobby.getClients()) {
-        sendMessage(currentClient->getClientSocket(), serializedMessage);
+    for (const auto& client : lobby.getClients()) {
+        sendMessage(client->getClientSocket(), serializedMessage);
     }
 }
 

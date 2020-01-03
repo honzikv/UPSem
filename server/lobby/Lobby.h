@@ -82,7 +82,7 @@ class Lobby {
 
         void setLobbyState(LobbyState lobbyState);
 
-        void restoreState(const shared_ptr<Client>& client, TCPData& request);
+        void restoreState(const shared_ptr<Client>& client);
 
         bool isJoinable() const;
 

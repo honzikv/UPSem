@@ -55,6 +55,7 @@ string TCPData::serialize() {
 
     data.append("}\n");
     isEditable = false;
+    cout << data;
     return data;
 }
 

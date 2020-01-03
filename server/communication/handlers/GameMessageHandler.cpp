@@ -185,3 +185,10 @@ void GameMessageHandler::sendShowPlayerReconnected(const shared_ptr<Client>& cli
     message.add(USERNAME, username);
     sendMessage(client->getClientSocket(), message.serialize());
 }
+
+void GameMessageHandler::sendPrepareGameRequest(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, GAME);
+    sendMessage(client->getClientSocket(), message.serialize());
+
+}

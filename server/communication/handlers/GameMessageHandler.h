@@ -22,14 +22,14 @@ class GameMessageHandler {
 
         GameController& gameController;
 
-        static void sendMessage(int clientSocket, const string& message);
-
     public:
         explicit GameMessageHandler(GameController& gameController);
 
         static void sendConfirmParticipationRequest(const shared_ptr<Client>& client);
 
         static void sendGameCouldNotStart(const shared_ptr<Client>& client);
+
+        static void sendPrepareGameRequest(const shared_ptr<Client>& client);
 
         static void sendBoard(const shared_ptr<Client>& player, const vector<shared_ptr<Client>>& players,
                        const shared_ptr<Dealer>& dealer);
@@ -54,6 +54,8 @@ class GameMessageHandler {
 
         void sendResults(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& clients,
                          const shared_ptr<Dealer>& dealer);
+
+        static void sendMessage(int clientSocket, const string& message);
 };
 
 

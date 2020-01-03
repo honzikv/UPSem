@@ -22,7 +22,7 @@ void Lobby::addClient(shared_ptr<Client> client) {
         lobbyMessageHandler->sendShowPlayerConnectedRequest(otherClient, client->getUsername());
     }
     //Posle vsem krome nove pripojeneho klienta novy seznam pripojenych - pripojeny klient seznam dostane v jine zprave
-    lobbyMessageHandler->sendUpdatePlayerListRequest(client);
+    lobbyMessageHandler->sendUpdatePlayerListRequest();
 }
 
 Lobby::Lobby(int limit, int id) : limit(limit), id(id) {
@@ -145,14 +145,6 @@ LobbyState Lobby::getLobbyState() const {
     return lobbyState;
 }
 
-bool Lobby::reconnectClient(const shared_ptr<Client>& client) {
-    if (!this->contains(client)) {
-        return false;
-    }
-    gameController->reconnectClient(client);
-    return true;
-}
-
 void Lobby::sendClientDisconnected(const shared_ptr<Client>& client) {
     if (!contains(client)) {
         return;
@@ -193,14 +185,15 @@ void Lobby::sendClientDidntConfirm(const shared_ptr<Client>& client) {
     lobbyMessageHandler->sendClientDidntConfirm(client);
 }
 
-void Lobby::restoreState(const shared_ptr<Client>& client, TCPData& request) {
+void Lobby::restoreState(const shared_ptr<Client>& client) {
     if (lobbyState == LOBBY_STATE_PREPARING) {
+        auto request = TCPData(DATATYPE_REQUEST);
+        request.add(RESPONSE, LOGIN);
         request.add(RESTORE_STATE, LOBBY);
         lobbyMessageHandler->sendMessage(client->getClientSocket(), request.serialize());
         lobbyMessageHandler->sendClientPlayerList(client);
     }
     else if (lobbyState == LOBBY_STATE_IN_GAME) {
-        request.add(RESTORE_STATE, GAME);
         gameController->reconnectClient(client);
     }
 }

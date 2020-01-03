@@ -23,7 +23,7 @@ void GameController::cancelGame() {
 void GameController::startGame() {
 
     for (const auto& client : lobby.getClients()) {
-        if (!this->containsConfirmedClient(client)) {
+        if (!containsConfirmedClient(client)) {
             lobby.removeClient(client);
             lobby.sendClientDidntConfirm(client);
         }
@@ -31,6 +31,9 @@ void GameController::startGame() {
 
     blackjack = make_unique<Blackjack>(confirmedClients);
     blackjack->dealCards();
+    for (const auto& client : blackjack->getPlayers()) {
+        gameMessageHandler->sendPrepareGameRequest(client);
+    }
     sendBoardUpdate();
 
     gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
@@ -135,6 +138,10 @@ void GameController::removeData() {
 }
 
 void GameController::reconnectClient(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_RESPONSE);
+    message.add(RESPONSE, LOGIN);
+    message.add(RESTORE_STATE, GAME);
+    gameMessageHandler->sendMessage(client->getClientSocket(), message.serialize());
     if (!isGameFinished()) {
         gameMessageHandler->sendBoard(client, blackjack->getPlayers(), blackjack->getDealer());
         if (blackjack->getCurrentPlayer() == client) {

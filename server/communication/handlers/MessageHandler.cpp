@@ -11,7 +11,6 @@
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
 void MessageHandler::sendMessage(int socket, const string& message) {
-    cout << message;
     if (send(socket, message.c_str(), message.size(), 0) <= 0) {
         server.closeConnection(socket);
     }
@@ -102,6 +101,7 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
 void MessageHandler::sendLoginIsNew(int clientSocket) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, LOGIN);
+    message.add(RESTORE_STATE, FALSE);
     sendMessage(clientSocket, message.serialize());
 }
 
@@ -133,18 +133,12 @@ void MessageHandler::sendLobby(shared_ptr<Client>& client, const shared_ptr<TCPD
     auto isJoinable = server.isLobbyJoinable(lobbyId);
     response.add(IS_JOINABLE, isJoinable ? TRUE : FALSE);
 
+    sendMessage(client->getClientSocket(), response.serialize());
+
     if (isJoinable) {
-        response.add(LOBBY_ID, to_string(lobbyId));
         auto lobby = server.getLobby(lobbyId);
         lobby->addClient(client);
-        auto clientNo = 0;
-        for (const auto& currentClient : lobby->getClients()) {
-            response.add(CLIENT + to_string(clientNo), currentClient->toString());
-            clientNo++;
-        }
     }
-
-    sendMessage(client->getClientSocket(), response.serialize());
 }
 
 void MessageHandler::leaveLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {
@@ -170,18 +164,7 @@ void MessageHandler::restoreClientState(const shared_ptr<Client>& client) {
         sendMessage(client->getClientSocket(), message.serialize());
         sendLobbyList(client);
     } else {
-        lobby->restoreState(client, message);
-    }
-
-    if (lobby != nullptr && lobby->getLobbyState() == LOBBY_STATE_IN_GAME) {
-        if (!lobby->reconnectClient(client)) {
-            sendGameFinished(client);
-            sendMessage(client->getClientSocket(), message.serialize());
-            sendLobbyList(client);
-        }
-    } else {
-        sendMessage(client->getClientSocket(), message.serialize());
-        sendLobbyList(client);
+        lobby->restoreState(client);
     }
 }
 
