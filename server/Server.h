@@ -107,22 +107,11 @@ class Server {
          */
         shared_ptr<Lobby> getLobby(int lobbyId);
 
-        /**
-         * Najde a vrati lobby, ve ktere
-         * @param client
-         * @return
-         */
-        shared_ptr<Lobby> getLobby(const shared_ptr<Client>& client);
-
         shared_ptr<Client> getClientByUsername(const string& username);
 
         const vector<shared_ptr<Lobby>>& getLobbies();
 
-        bool isLoginUnique(const string& username);
-
         bool isLobbyJoinable(int lobbyId);
-
-        void createThreads();
 
         void registerClient(const string& username, int clientSocket);
 
@@ -134,7 +123,7 @@ class Server {
 
         void selectServer();
 
-        void removeClient(const shared_ptr<Client>& client);
+        void disconnectClients();
 };
 
 #endif

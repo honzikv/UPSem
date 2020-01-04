@@ -17,6 +17,12 @@ void GameMessageHandler::sendGameCouldNotStart(const shared_ptr<Client>& client)
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
+void GameMessageHandler::sendPrepareGameRequest(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, GAME);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
 void GameMessageHandler::sendBoard(const shared_ptr<Client>& client, const vector<shared_ptr<Client>>& players,
                                    const shared_ptr<Dealer>& dealer) {
     auto message = TCPData(DATATYPE_REQUEST);
@@ -184,11 +190,4 @@ void GameMessageHandler::sendShowPlayerReconnected(const shared_ptr<Client>& cli
     message.add(REQUEST, SHOW_PLAYER_RECONNECTED);
     message.add(USERNAME, username);
     sendMessage(client->getClientSocket(), message.serialize());
-}
-
-void GameMessageHandler::sendPrepareGameRequest(const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, GAME);
-    sendMessage(client->getClientSocket(), message.serialize());
-
 }

@@ -3,10 +3,9 @@
 //
 
 #include "Client.h"
-#include "../communication/Values.h"
 
 
-Client::Client(string id, int fileDescriptor) : username(std::move(id)), clientSocket(fileDescriptor) {
+Client::Client(string id, int fileDescriptor) : username(move(id)), clientSocket(fileDescriptor) {
     lastMessageReceived = chrono::system_clock::now();
 }
 
@@ -25,10 +24,6 @@ bool Client::operator==(const Client& anotherClient) const {
 
 bool Client::operator!=(const Client& anotherClient) const {
     return !(anotherClient == *this);
-}
-
-bool Client::isReady() const {
-    return ready;
 }
 
 void Client::setReady(bool ready) {
@@ -55,10 +50,6 @@ const chrono::time_point<chrono::system_clock>& Client::getLastMessageReceived()
     return lastMessageReceived;
 }
 
-void Client::setDisconnected(bool disconnected) {
-    Client::disconnected = disconnected;
-}
-
 const shared_ptr<PlayerInfo>& Client::getPlayerInfo() const {
     return playerInfo;
 }
@@ -70,6 +61,10 @@ void Client::createPlayerInfo(int bet) {
 string Client::toString() {
     auto isReady = ready ? " READY" : " NOT READY";
     return string(getUsername() + isReady);
+}
+
+bool Client::isReady() const {
+    return ready;
 }
 
 

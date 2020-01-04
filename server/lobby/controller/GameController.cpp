@@ -21,7 +21,6 @@ void GameController::cancelGame() {
 }
 
 void GameController::startGame() {
-
     for (const auto& client : lobby.getClients()) {
         if (!containsConfirmedClient(client)) {
             lobby.removeClient(client);
@@ -39,7 +38,6 @@ void GameController::startGame() {
     gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
     sendCurrentPlayer();
     lobby.setLobbyState(LOBBY_STATE_IN_GAME);
-    lobby.resetClientParticipation();
     lastGameUpdate = chrono::system_clock::now();
 }
 
@@ -97,8 +95,10 @@ void GameController::handlePlayerTurn(const shared_ptr<Client>& client, const sh
 }
 
 void GameController::prepareGame() {
+    //Controller si zaznamena cas startu, klienti maji 60s na potvrzeni sazky
     preparationStart = chrono::system_clock::now();
 
+    //Kazdemu klientovi je poslan dotaz s tim kolik vsadi
     for (const auto& client : lobby.getClients()) {
         gameMessageHandler->sendConfirmParticipationRequest(client);
     }

@@ -100,7 +100,12 @@ void Lobby::handleLobby() {
     switch (lobbyState) {
         default:
         case LOBBY_STATE_WAITING:
+            //Lobby zjisti, zda-li muze pripravit zacatek hry - tzn. zda-li vsichni klienti hlasovali
             if (canPrepareGameStart()) {
+                /*
+                Pokud lze, rekne controlleru aby odeslal zpravy pro pripravu hry - vsem hracum odesle dotaz kolik chteji
+                vsadit
+                */
                 gameController->prepareGame();
             }
             break;
@@ -136,8 +141,9 @@ void Lobby::checkIfReturnToLobby() {
 
         for (const auto& client : clients) {
             lobbyMessageHandler->sendShowLobbyRequest(client);
-            gameController->removeData();
         }
+        resetClientParticipation();
+        gameController->removeData();
     }
 }
 
@@ -192,8 +198,7 @@ void Lobby::restoreState(const shared_ptr<Client>& client) {
         request.add(RESTORE_STATE, LOBBY);
         lobbyMessageHandler->sendMessage(client->getClientSocket(), request.serialize());
         lobbyMessageHandler->sendClientPlayerList(client);
-    }
-    else if (lobbyState == LOBBY_STATE_IN_GAME) {
+    } else if (lobbyState == LOBBY_STATE_IN_GAME) {
         gameController->reconnectClient(client);
     }
 }

@@ -41,6 +41,9 @@ void MessageHandler::pingBack(int clientSocket) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, PING);
     sendMessage(clientSocket, message.serialize());
+
+    auto client = server.getClientBySocket(clientSocket);
+    client->updateLastMessageReceived();
 }
 
 void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& message) {
@@ -119,11 +122,12 @@ void MessageHandler::handleResponse(int clientSocket, const shared_ptr<TCPData>&
 
     if (lobby == nullptr) {
         cout << "Closing incorrect response" << endl;
-        server.removeClient(client);
+        server.closeConnection(client->getClientSocket());
     } else {
         lobby->addNewMessage(message, client);
     }
 
+    client->updateLastMessageReceived();
 }
 
 void MessageHandler::sendLobby(shared_ptr<Client>& client, const shared_ptr<TCPData>& message) {

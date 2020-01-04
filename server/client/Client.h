@@ -34,16 +34,6 @@ class Client {
          */
         bool ready = false;
 
-        /**
-         * Urcuje, zda-li je hrac disconnected
-         */
-        bool disconnected = false;
-
-        /**
-         * Flag pro server pro zjisteni, zda-li ma s klientem komunikovat
-         */
-        bool inLobby = false;
-
         int lobbyId = -1;
 
         chrono::time_point<chrono::system_clock> lastMessageReceived;
@@ -74,8 +64,6 @@ class Client {
         void setReady(bool hasVoted);
 
         void updateLastMessageReceived();
-
-        void setDisconnected(bool disconnected);
 
         const chrono::time_point<chrono::system_clock>& getLastMessageReceived() const;
 

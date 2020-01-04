@@ -87,6 +87,7 @@ void Server::selectServer() {
                 if (readResult <= 0) {
                     //pokud je vysledek 0 - End of Stream nebo -1 Exception, uzavreme socket
                     cout << "Client was disconnected" << endl;
+                    //Preda socket do vektoru pro odpojeni - klient zustane zachovan
                     closeConnection(clientSocket);
                 } else {
                     //jinak predame zpravu message handleru
@@ -123,80 +124,10 @@ void Server::selectServer() {
             iterator++;
         }
 
-        /*
-         * Sockety, ktere se maji zavrit se ukladaji do vectoru socketsToClose a zaviraji se az po probehnuti selectu,
-         * pokud je pro socket zaregistrovany klient a klient byl ve hre, ostatnim klientum je zaslana zprava, ze se
-         * klient odpojil.
-         */
-        for (auto socketToClose : socketsToClose) {
-            close(socketToClose);
-            cout << "connection closed " << socketToClose << endl;
-            clientSockets.erase(remove(
-                    clientSockets.begin(), clientSockets.end(), socketToClose), clientSockets.end());
-
-            auto client = getClientBySocket(socketToClose);
-            if (client != nullptr) {
-                client->setClientSocket(-1);
-
-                auto lobby = getLobby(client->getLobbyId());
-                if (lobby == nullptr) {
-                    continue;
-                }
-
-                auto lobbyState = lobby->getLobbyState();
-                if (lobbyState == LOBBY_STATE_WAITING
-                    || (lobbyState == LOBBY_STATE_PREPARING && !lobby->hasClientConfirmedToPlay(client))) {
-                    lobby->removeClient(client);
-                } else {
-                    lobby->sendClientDisconnected(client);
-                }
-            }
-        }
-        socketsToClose.clear();
-
-        /*
-         * Detekce, ze se klient odpojil se provede pomoci timeoutu - klient posila kazdych par sekund ping aby udrzel
-         * spojeni se serverem + jine pozadavky. Po uplynuti timeoutu se u klienta nastavi pole disconnected na true,
-         * pokud se neozve do delsi doby, jsou veskera data o klientovi odstranena.
-         */
-        auto currentTime = chrono::system_clock::now();
-        for (const auto& client : clients) {
-            auto durationMillis = chrono::duration<double, milli>(
-                    currentTime - client->getLastMessageReceived()).count();
-
-            if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
-                client->setDisconnected(true);
-            }
-
-            auto clientLobby = getLobby(client->getLobbyId());
-
-            if (clientLobby != nullptr && (clientLobby->getLobbyState() == LOBBY_STATE_IN_GAME ||
-                                           clientLobby->getLobbyState()
-                                           == LOBBY_STATE_FINISHED)) {
-                continue;
-            }
-
-            if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
-                removeClient(client);
-            }
-        }
-
+        disconnectClients();
         for (const auto& lobby : lobbies) {
             lobby->handleLobby();
         }
-    }
-}
-
-void Server::acceptNewClient(int& addressLength) {
-    auto acceptResult = accept(serverSocketFileDescriptor, (sockaddr*) &clientAddress,
-                               (socklen_t*) &addressLength);
-
-    if (acceptResult < 0) {
-        cerr << "Error while accepting client" << endl;
-    } else {
-        cout << "New connection socket " << acceptResult << " from ip"
-             << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
-        clientSockets.push_back(acceptResult);
     }
 }
 
@@ -217,6 +148,87 @@ int Server::setupFileDescriptors(int maxSocket) {
     return maxSocket;
 }
 
+void Server::disconnectClients() {
+
+    /*
+     * Detekce, ze se klient odpojil se provede pomoci timeoutu - klient posila kazdych par sekund ping aby udrzel
+     * spojeni se serverem + jine pozadavky. Po uplynuti timeoutu se u klienta nastavi pole disconnected na true,
+     * pokud se neozve do delsi doby, jsou veskera data o klientovi odstranena.
+     */
+    auto currentTime = chrono::system_clock::now();
+    for (const auto& client : clients) {
+        auto durationMillis = chrono::duration<double, milli>(
+                currentTime - client->getLastMessageReceived()).count();
+
+        if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
+            if (client->getClientSocket() != -1) {
+                closeConnection(client->getClientSocket());
+            }
+        }
+        if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
+            //Pokud klient neni v lobby odstranime ho
+            cout << "Data of client " << client->getUsername() << " has been removed" << endl;
+            if (client->getLobbyId() == -1) {
+                clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
+                continue;
+            }
+
+            //Pokud je lobby ve stavu, ze se nekona ani nepripravuje zadna hra, klienta odstrani
+            auto lobby = getLobby(client->getLobbyId());
+            if (lobby->getLobbyState() == LOBBY_STATE_WAITING) {
+                lobby->removeClient(client);
+            }
+        }
+    }
+
+    /*
+     * Sockety, ktere se maji zavrit se ukladaji do vectoru socketsToClose a zaviraji se az po probehnuti selectu,
+     * pokud je pro socket zaregistrovany klient a klient byl ve hre, ostatnim klientum je zaslana zprava, ze se
+     * klient odpojil.
+     */
+    for (auto socketToClose : socketsToClose) {
+        close(socketToClose);
+        cout << "connection closed " << socketToClose << endl;
+        clientSockets.erase(remove(
+                clientSockets.begin(), clientSockets.end(), socketToClose), clientSockets.end());
+
+        auto client = getClientBySocket(socketToClose);
+        if (client == nullptr) {
+            continue;
+        }
+
+        client->setClientSocket(-1);
+
+        auto lobby = getLobby(client->getLobbyId());
+        if (lobby == nullptr) {
+            continue;
+        }
+
+        auto lobbyState = lobby->getLobbyState();
+        if (lobbyState == LOBBY_STATE_WAITING) {
+            lobby->removeClient(client);
+        } else {
+            lobby->sendClientDisconnected(client);
+        }
+    }
+    socketsToClose.clear();
+
+}
+
+void Server::acceptNewClient(int& addressLength) {
+    auto acceptResult = accept(serverSocketFileDescriptor, (sockaddr*) &clientAddress,
+                               (socklen_t*) &addressLength);
+
+    if (acceptResult < 0) {
+        cerr << "Error while accepting client" << endl;
+    } else {
+        cout << "New connection socket " << acceptResult << " from ip"
+             << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
+        clientSockets.push_back(acceptResult);
+    }
+}
+
+
 
 shared_ptr<Client> Server::getClientBySocket(int socket) {
     for (const auto& client : clients) {
@@ -224,7 +236,6 @@ shared_ptr<Client> Server::getClientBySocket(int socket) {
             return client;
         }
     }
-
     return nullptr;
 }
 
@@ -265,21 +276,5 @@ shared_ptr<Client> Server::getClientByUsername(const string& username) {
 
 void Server::closeConnection(int clientSocket) {
     socketsToClose.insert(clientSocket);
-}
-
-void Server::removeClient(const shared_ptr<Client>& client) {
-
-    if (client->getClientSocket() != -1) {
-        close(client->getClientSocket());
-        clientSockets.erase(remove(
-                clientSockets.begin(), clientSockets.end(), client->getClientSocket()), clientSockets.end());
-    }
-
-    //Pokud je nahodou klient v lobby odstranime ho z lobby
-    if (getLobby(client->getLobbyId()) != nullptr) {
-        getLobby(client->getLobbyId())->removeClient(client);
-    }
-    clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
-    cout << "data of client " << client->getUsername() << " has been removed" << endl;
 }
 
