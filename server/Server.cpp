@@ -115,7 +115,6 @@ void Server::selectServer() {
                     catch (exception&) {
                         cerr << "client sent incorrect input, disconnecting" << endl;
                         closeConnection(clientSocket);
-                        continue;
                     }
 
                 }
@@ -124,6 +123,7 @@ void Server::selectServer() {
             iterator++;
         }
 
+        cout << "Disconnecting clients " << endl;
         disconnectClients();
         for (const auto& lobby : lobbies) {
             lobby->handleLobby();
