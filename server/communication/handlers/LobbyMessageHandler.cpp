@@ -102,13 +102,5 @@ void LobbyMessageHandler::sendClientDidntConfirm(const shared_ptr<Client>& clien
 void LobbyMessageHandler::sendShowLobbyRequest(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, JOIN_LOBBY);
-    message.add(LOBBY_ID, to_string(lobby.getId()));
-
-    auto clientNo = 0;
-    for (const auto& currentClient : lobby.getClients()) {
-        message.add(CLIENT + to_string(clientNo), currentClient->getUsername());
-        clientNo++;
-    }
-
     sendMessage(client->getClientSocket(), message.serialize());
 }

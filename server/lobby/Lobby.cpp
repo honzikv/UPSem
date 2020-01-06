@@ -142,6 +142,7 @@ void Lobby::checkIfReturnToLobby() {
         for (const auto& client : clients) {
             lobbyMessageHandler->sendShowLobbyRequest(client);
         }
+        lobbyMessageHandler->sendUpdatePlayerListRequest();
         resetClientParticipation();
         gameController->removeData();
     }
@@ -192,13 +193,13 @@ void Lobby::sendClientDidntConfirm(const shared_ptr<Client>& client) {
 }
 
 void Lobby::restoreState(const shared_ptr<Client>& client) {
-    if (lobbyState == LOBBY_STATE_PREPARING) {
-        auto request = TCPData(DATATYPE_REQUEST);
+    if (lobbyState == LOBBY_STATE_PREPARING || lobbyState == LOBBY_STATE_WAITING) {
+        auto request = TCPData(DATATYPE_RESPONSE);
         request.add(RESPONSE, LOGIN);
         request.add(RESTORE_STATE, LOBBY);
         lobbyMessageHandler->sendMessage(client->getClientSocket(), request.serialize());
         lobbyMessageHandler->sendClientPlayerList(client);
-    } else if (lobbyState == LOBBY_STATE_IN_GAME) {
+    } else if (lobbyState == LOBBY_STATE_IN_GAME || lobbyState == LOBBY_STATE_FINISHED) {
         gameController->reconnectClient(client);
     }
 }

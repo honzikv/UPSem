@@ -75,7 +75,7 @@ class LobbyMessageHandler {
          */
         static void sendClientDidntConfirm(const shared_ptr<Client>& client);
 
-        void sendShowLobbyRequest(const shared_ptr<Client>& client);
+        static void sendShowLobbyRequest(const shared_ptr<Client>& client);
 
         void sendUpdatePlayerListRequest(const shared_ptr<Client>& exclude);
 

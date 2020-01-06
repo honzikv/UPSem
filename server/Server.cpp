@@ -116,10 +116,8 @@ void Server::selectServer() {
                         cerr << "client sent incorrect input, disconnecting" << endl;
                         closeConnection(clientSocket);
                     }
-
                 }
             }
-
             iterator++;
         }
 
