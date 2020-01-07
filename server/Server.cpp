@@ -6,7 +6,8 @@
 #include "lobby/Lobby.h"
 #include "communication/handlers/MessageHandler.h"
 
-Server::Server(int port, int lobbyCount) : port(port) {
+Server::Server(const string ip, int port, int lobbyCount) : ip(ip), port(port) {
+
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
     }
@@ -14,44 +15,43 @@ Server::Server(int port, int lobbyCount) : port(port) {
     selectServer();
 }
 
-
 void Server::selectServer() {
 
     //create a master socket
-    if ((serverSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    if ((masterSocket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         cerr << "Initializing socket failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
 
     auto option = 1;
     //nastaveni socketu aby prijmal vice spojeni
-    if (setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, (char*) &option,
+    if (setsockopt(masterSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &option,
                    sizeof(option)) < 0) {
         cerr << "Setting socket option failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
 
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_addr.s_addr = inet_addr(ip.c_str());
     address.sin_port = htons(port);
 
     //bind na port
-    if (bind(serverSocketFileDescriptor, (struct sockaddr*) &address, sizeof(address)) < 0) {
+    if (bind(masterSocket, (struct sockaddr*) &address, sizeof(address)) < 0) {
         cerr << "Bind failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
 
-
-    if (listen(serverSocketFileDescriptor, 3) < 0) {
+    if (listen(masterSocket, 3) < 0) {
         cerr << "Listen failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
 
     int addrlen = sizeof(address);
     auto maxSocket = -1;
-    timeval timeout;
+    timeval timeout{};
 
-    cout << "server is ready to handle players " << endl;
+    cout << "Server successfully launched @ " << ip << ":" << port << endl;
+    cout << "Server is ready to handle players " << endl;
     while (true) {
         maxSocket = setupFileDescriptors(maxSocket);
 
@@ -60,13 +60,12 @@ void Server::selectServer() {
         timeout.tv_usec = 0;
 
         auto activity = select(maxSocket + 1, &fileDescriptorSet, NULL, NULL, &timeout);
-
         if ((activity < 0)) {
             cerr << "Select error, please try again later" << endl;
             exit(EXIT_FAILURE);
         }
         //Pokud je neco na server socketu, jedna se o novy pokus o pripojeni
-        if (FD_ISSET(serverSocketFileDescriptor, &fileDescriptorSet)) {
+        if (FD_ISSET(masterSocket, &fileDescriptorSet)) {
             acceptNewClient(addrlen);
         }
 
@@ -121,7 +120,6 @@ void Server::selectServer() {
             iterator++;
         }
 
-        cout << "Disconnecting clients " << endl;
         disconnectClients();
         for (const auto& lobby : lobbies) {
             lobby->handleLobby();
@@ -133,8 +131,8 @@ int Server::setupFileDescriptors(int maxSocket) {
     //vynulovani filedescriptor setu
     FD_ZERO(&fileDescriptorSet);
     //pridani socketu serveru do filedescriptor setu
-    FD_SET(serverSocketFileDescriptor, &fileDescriptorSet);
-    maxSocket = serverSocketFileDescriptor;
+    FD_SET(masterSocket, &fileDescriptorSet);
+    maxSocket = masterSocket;
 
     for (const auto& clientSocket : clientSockets) {
         FD_SET(clientSocket, &fileDescriptorSet);
@@ -158,25 +156,32 @@ void Server::disconnectClients() {
         auto durationMillis = chrono::duration<double, milli>(
                 currentTime - client->getLastMessageReceived()).count();
 
-        if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS) {
-            if (client->getClientSocket() != -1) {
-                closeConnection(client->getClientSocket());
-            }
+        if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS && client->getClientSocket() != -1) {
+            closeConnection(client->getClientSocket());
         }
+    }
+
+    //Smazani klientu, kteri se dlouho nepripojili pro snizeni pametove narocnosti
+    currentTime = chrono::system_clock::now();
+    auto clientsIt = clients.begin();
+    while (clientsIt != clients.end()) {
+        auto client = *clientsIt;
+        auto durationMillis = chrono::duration<double, milli>(
+                currentTime - client->getLastMessageReceived()).count();
+
         if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {
             //Pokud klient neni v lobby odstranime ho
             cout << "Data of client " << client->getUsername() << " has been removed" << endl;
-            if (client->getLobbyId() == -1) {
-                clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
-                continue;
+            if (client->getLobbyId() != -1) {
+                auto lobby = getLobby(client->getLobbyId());
+                if (lobby->getLobbyState() == LOBBY_STATE_WAITING) {
+                    lobby->removeClient(client);
+                }
             }
-
-            //Pokud je lobby ve stavu, ze se nekona ani nepripravuje zadna hra, klienta odstrani
-            auto lobby = getLobby(client->getLobbyId());
-            if (lobby->getLobbyState() == LOBBY_STATE_WAITING) {
-                lobby->removeClient(client);
-            }
+            clients.erase(clientsIt);
+            continue;
         }
+        clientsIt++;
     }
 
     /*
@@ -196,7 +201,6 @@ void Server::disconnectClients() {
         }
 
         client->setClientSocket(-1);
-
         auto lobby = getLobby(client->getLobbyId());
         if (lobby == nullptr) {
             continue;
@@ -214,7 +218,7 @@ void Server::disconnectClients() {
 }
 
 void Server::acceptNewClient(int& addressLength) {
-    auto acceptResult = accept(serverSocketFileDescriptor, (sockaddr*) &clientAddress,
+    auto acceptResult = accept(masterSocket, (sockaddr*) &clientAddress,
                                (socklen_t*) &addressLength);
 
     if (acceptResult < 0) {
@@ -225,7 +229,6 @@ void Server::acceptNewClient(int& addressLength) {
         clientSockets.push_back(acceptResult);
     }
 }
-
 
 
 shared_ptr<Client> Server::getClientBySocket(int socket) {

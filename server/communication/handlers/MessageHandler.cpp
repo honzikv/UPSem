@@ -86,7 +86,7 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
     if (client == nullptr) {
         server.registerClient(username, clientSocket);
         sendLoginIsNew(clientSocket);
-        cout << "Welcome \"" << username << "\" on the server " << endl;
+        cout << "Welcome \"" << username << "\" to the server " << endl;
     } else {
         //Jinak odpojime predchozi pripojeni (pokud nebylo odpojeno)
         client = this->server.getClientByUsername(username);

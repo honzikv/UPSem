@@ -19,6 +19,8 @@
 #include <unordered_set>
 #include <algorithm>
 #include <memory>
+#include <signal.h>
+
 #include "client/Client.h"
 #include "lobby/Lobby.h"
 #include "communication/Constants.h"
@@ -33,31 +35,35 @@ class Lobby;
 class MessageHandler;
 
 class Server {
-
-        /**
+        /*
          * Master socket pro select()
          */
-        int serverSocketFileDescriptor;
+        int masterSocket{};
 
         /**
          * Port serveru
          */
-        int port;
+        const int port;
+
+        /**
+         * IP adresa serveru
+         */
+        const string ip;
 
         /**
          * Info o adrese serveru
          */
-        struct sockaddr_in address;
+        struct sockaddr_in address{};
 
         /**
          * Info o adrese klienta pro select
          */
-        struct sockaddr_in clientAddress;
+        struct sockaddr_in clientAddress{};
 
         /**
          * Set vsech file descriptoru
          */
-        fd_set fileDescriptorSet;
+        fd_set fileDescriptorSet{};
 
         /**
          * Seznam vsech klientu
@@ -68,11 +74,6 @@ class Server {
          * Seznam vsech lobby
          */
         vector<shared_ptr<Lobby>> lobbies;
-
-        /**
-         * Seznam vsech vlaken
-         */
-        vector<thread> lobbyThreads;
 
         /**
          * Vektor s klientskymi sockety pro select
@@ -86,12 +87,13 @@ class Server {
         unordered_set<int> socketsToClose;
 
         /**
-         *
+         * Instance message handleru - zpracovani prijatych zprav
          */
         shared_ptr<MessageHandler> messageHandler;
 
     public:
-        Server(int port, int lobbyCount);
+
+        Server(string ip, int port, int lobbyCount);
 
         /**
          * Najde klienta podle id file descriptoru socketu

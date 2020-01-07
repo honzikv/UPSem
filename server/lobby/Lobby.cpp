@@ -203,7 +203,3 @@ void Lobby::restoreState(const shared_ptr<Client>& client) {
         gameController->reconnectClient(client);
     }
 }
-
-bool Lobby::hasClientConfirmedToPlay(const shared_ptr<Client>& client) {
-    return contains(client) && gameController->containsConfirmedClient(client);
-}
