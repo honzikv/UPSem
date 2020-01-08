@@ -26,6 +26,7 @@
 #define SHOW_PLAYER_DISCONNECTED "showPlayerDisconnected"
 #define SHOW_PLAYER_CONNECTED "showPlayerConnected"
 #define CONFIRM_PARTICIPATION "confirmParticipation"
+#define DECLINE_PARTICIPATION "declineParticipation"
 #define SHOW_GAME_START_FAILED "showGameStartFailed"
 #define REMOVED_FROM_LOBBY "removedFromLobby"
 #define UPDATE_BOARD "updateBoard"

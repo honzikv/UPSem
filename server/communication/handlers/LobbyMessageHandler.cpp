@@ -28,6 +28,8 @@ void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const
         lobby.getGameController()->addConfirmedClient(client, stoi(message->valueOf(BET)));
     } else if (response == TURN) {
         lobby.getGameController()->handlePlayerTurn(client, message);
+    } else if (response == DECLINE_PARTICIPATION) {
+        lobby.removeClient(client);
     }
 
 }
