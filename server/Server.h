@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <memory>
 #include <signal.h>
+#include <sys/ioctl.h>
 
 #include "client/Client.h"
 #include "lobby/Lobby.h"
@@ -63,7 +64,7 @@ class Server {
         /**
          * Set vsech file descriptoru
          */
-        fd_set fileDescriptorSet{};
+        fd_set clientFileDescriptors{};
 
         /**
          * Seznam vsech klientu
@@ -76,11 +77,6 @@ class Server {
         vector<shared_ptr<Lobby>> lobbies;
 
         /**
-         * Vektor s klientskymi sockety pro select
-         */
-        vector<int> clientSockets;
-
-        /**
          * Set (pokud by byl prikaz zadan vice nez 1, aby se zbytecne nezaviral stejny file descriptor) socketu,
          * ktere se po selectu zavrou
          */
@@ -90,6 +86,9 @@ class Server {
          * Instance message handleru - zpracovani prijatych zprav
          */
         shared_ptr<MessageHandler> messageHandler;
+
+    public:
+        virtual ~Server();
 
     public:
 
@@ -120,8 +119,6 @@ class Server {
         void closeConnection(int clientSocket);
 
         int setupFileDescriptors(int maxSocket);
-
-        void acceptNewClient(int& addressLength);
 
         void selectServer();
 

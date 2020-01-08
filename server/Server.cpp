@@ -52,72 +52,78 @@ void Server::selectServer() {
 
     cout << "Server successfully launched @ " << ip << ":" << port << endl;
     cout << "Server is ready to handle players " << endl;
+
+    fd_set tests;
+    FD_ZERO(&clientFileDescriptors);
+    FD_SET(masterSocket, &clientFileDescriptors);
     while (true) {
-        maxSocket = setupFileDescriptors(maxSocket);
+        //kopie fdSetu do noveho protoze select neni stabilni a upravi ho
+        tests = clientFileDescriptors;
 
         //nastaveni timeoutu
-        timeout.tv_sec = 30;
+        timeout.tv_sec = 300;
         timeout.tv_usec = 0;
 
-        auto activity = select(maxSocket + 1, &fileDescriptorSet, NULL, NULL, &timeout);
-        if ((activity < 0)) {
-            cerr << "Select error, please try again later" << endl;
-            exit(EXIT_FAILURE);
-        }
-        //Pokud je neco na server socketu, jedna se o novy pokus o pripojeni
-        if (FD_ISSET(masterSocket, &fileDescriptorSet)) {
-            acceptNewClient(addrlen);
-        }
-
-        /*
-         * Iterace pres vektor klientu, pokud klient neco poslal, adekvatne zpracujeme zpravu, pokud se klient
-         * odpojil, iterator socket zavre
-         */
-        auto iterator = 0;
-        while (iterator < clientSockets.size()) {
-            auto clientSocket = clientSockets[iterator];
-            char buffer[MAX_BUFFER_SIZE_BYTES];
-            memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
-
-            if (FD_ISSET(clientSocket, &fileDescriptorSet)) {
-
-                auto readResult = read(clientSocket, buffer, MAX_BUFFER_SIZE_BYTES);
-
-                if (readResult <= 0) {
-                    //pokud je vysledek 0 - End of Stream nebo -1 Exception, uzavreme socket
-                    cout << "Client was disconnected" << endl;
-                    //Preda socket do vektoru pro odpojeni - klient zustane zachovan
-                    closeConnection(clientSocket);
-                } else {
-                    //jinak predame zpravu message handleru
-                    try {
-                        //teoreticky by se mohlo stat, ze buffer nacte vice nez jednu zpravu
-                        auto bufferAsString = string(buffer);
-                        auto messageVector = vector<string>();
-                        auto stringStream = stringstream(bufferAsString);
-
-                        /*
-                         * klient odesila zpravy ve formatu {}\n, tzn. muzeme je rozdelit pomoci \n znaku,
-                         * pokud je jakakoliv zprava poskozena, dojde k zavreni spojeni - parser zprav hodi
-                         * DeserializationException a spojeni se ze strany serveru uzavre
-                         */
-                        string temp;
-                        while (getline(stringStream, temp, '\n')) {
-                            messageVector.push_back(temp);
-                        }
-
-                        for (const auto& messageFromBuffer : messageVector) {
-                            auto message = make_shared<TCPData>(messageFromBuffer);
-                            messageHandler->handleMessage(clientSocket, message);
-                        }
+        //nasledny block selectu
+        select(FD_SETSIZE, &tests, NULL, NULL, &timeout);
+        auto a2read = 0;
+        char buffer[MAX_BUFFER_SIZE_BYTES];
+        for (auto fileDescriptor = 3; fileDescriptor < FD_SETSIZE; fileDescriptor++) {
+            //pokud je fileDescriptor citelny
+            if (FD_ISSET(fileDescriptor, &tests)) {
+                //Pokud je neco na server socketu, jedna se o novy pokus o pripojeni
+                if (fileDescriptor == masterSocket) {
+                    auto clientFileDescriptor = accept(masterSocket, (sockaddr*) &clientAddress,
+                                                       (socklen_t*) &addrlen);
+                    FD_SET(clientFileDescriptor, &clientFileDescriptors);
+                    if (clientFileDescriptor < 0) {
+                        cerr << "Error while accepting client" << endl;
+                    } else {
+                        cout << "New connection socket " << clientFileDescriptor << " from ip"
+                             << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
                     }
-                    catch (exception&) {
-                        cerr << "client sent incorrect input, disconnecting" << endl;
-                        closeConnection(clientSocket);
+                    cout << "accepted new client " << endl;
+                } else {
+                    ioctl(fileDescriptor, FIONREAD, &a2read);
+                    cout << "a2read" << endl;
+                    if (a2read > 0) {
+                        memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
+                        read(fileDescriptor, buffer, MAX_BUFFER_SIZE_BYTES);
+                        //jinak predame zpravu message handleru
+                        try {
+                            //teoreticky by se mohlo stat, ze buffer nacte vice nez jednu zpravu
+                            auto bufferAsString = string(buffer);
+                            auto messageVector = vector<string>();
+                            auto stringStream = stringstream(bufferAsString);
+
+                            /*
+                             * klient odesila zpravy ve formatu {}\n, tzn. muzeme je rozdelit pomoci \n znaku,
+                             * pokud je jakakoliv zprava poskozena, dojde k zavreni spojeni - parser zprav hodi
+                             * DeserializationException a spojeni se ze strany serveru uzavre
+                             */
+                            string temp;
+                            while (getline(stringStream, temp, '\n')) {
+                                messageVector.push_back(temp);
+                            }
+
+                            for (const auto& messageFromBuffer : messageVector) {
+                                auto message = make_shared<TCPData>(messageFromBuffer);
+                                messageHandler->handleMessage(fileDescriptor, message);
+                            }
+                        }
+                        catch (exception&) {
+                            cerr << "client sent incorrect input, disconnecting" << endl;
+                            closeConnection(fileDescriptor);
+                        }
+                        //Socket se spravne zavrel klientem
+                    } else if (a2read == 0) {
+                        closeConnection(fileDescriptor);
+                        //Socket
+                    } else {
+                        closeConnection(fileDescriptor);
                     }
                 }
             }
-            iterator++;
         }
 
         disconnectClients();
@@ -125,23 +131,6 @@ void Server::selectServer() {
             lobby->handleLobby();
         }
     }
-}
-
-int Server::setupFileDescriptors(int maxSocket) {
-    //vynulovani filedescriptor setu
-    FD_ZERO(&fileDescriptorSet);
-    //pridani socketu serveru do filedescriptor setu
-    FD_SET(masterSocket, &fileDescriptorSet);
-    maxSocket = masterSocket;
-
-    for (const auto& clientSocket : clientSockets) {
-        FD_SET(clientSocket, &fileDescriptorSet);
-
-        if (clientSocket > maxSocket) {
-            maxSocket = clientSocket;
-        }
-    }
-    return maxSocket;
 }
 
 void Server::disconnectClients() {
@@ -191,9 +180,6 @@ void Server::disconnectClients() {
      */
     for (auto socketToClose : socketsToClose) {
         close(socketToClose);
-        cout << "connection closed " << socketToClose << endl;
-        clientSockets.erase(remove(
-                clientSockets.begin(), clientSockets.end(), socketToClose), clientSockets.end());
 
         auto client = getClientBySocket(socketToClose);
         if (client == nullptr) {
@@ -215,19 +201,6 @@ void Server::disconnectClients() {
     }
     socketsToClose.clear();
 
-}
-
-void Server::acceptNewClient(int& addressLength) {
-    auto acceptResult = accept(masterSocket, (sockaddr*) &clientAddress,
-                               (socklen_t*) &addressLength);
-
-    if (acceptResult < 0) {
-        cerr << "Error while accepting client" << endl;
-    } else {
-        cout << "New connection socket " << acceptResult << " from ip"
-             << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
-        clientSockets.push_back(acceptResult);
-    }
 }
 
 
@@ -277,5 +250,14 @@ shared_ptr<Client> Server::getClientByUsername(const string& username) {
 
 void Server::closeConnection(int clientSocket) {
     socketsToClose.insert(clientSocket);
+    FD_CLR(clientSocket, &clientFileDescriptors);
+}
+
+Server::~Server() {
+    close(masterSocket);
+
+    for (const auto& client : clients) {
+        close(client->getClientSocket());
+    }
 }
 
