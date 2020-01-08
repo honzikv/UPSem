@@ -47,7 +47,6 @@ void Server::selectServer() {
     }
 
     int addrlen = sizeof(address);
-    auto maxSocket = -1;
     timeval timeout{};
 
     cout << "Server successfully launched @ " << ip << ":" << port << endl;
@@ -82,10 +81,8 @@ void Server::selectServer() {
                         cout << "New connection socket " << clientFileDescriptor << " from ip"
                              << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
                     }
-                    cout << "accepted new client " << endl;
                 } else {
                     ioctl(fileDescriptor, FIONREAD, &a2read);
-                    cout << "a2read" << endl;
                     if (a2read > 0) {
                         memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
                         read(fileDescriptor, buffer, MAX_BUFFER_SIZE_BYTES);
@@ -118,7 +115,6 @@ void Server::selectServer() {
                         //Socket se spravne zavrel klientem
                     } else {
                         closeConnection(fileDescriptor);
-                        //Socket
                     }
                 }
             }
@@ -178,7 +174,7 @@ void Server::disconnectClients() {
      */
     for (auto socketToClose : socketsToClose) {
         close(socketToClose);
-
+        cout << "communication with socket " << socketToClose << " was closed" << endl;
         auto client = getClientBySocket(socketToClose);
         if (client == nullptr) {
             continue;
@@ -194,13 +190,13 @@ void Server::disconnectClients() {
         if (lobbyState == LOBBY_STATE_WAITING) {
             lobby->removeClient(client);
         } else {
+            lobby->addDisconnectedClient(client);
             lobby->sendClientDisconnected(client);
         }
     }
     socketsToClose.clear();
 
 }
-
 
 shared_ptr<Client> Server::getClientBySocket(int socket) {
     for (const auto& client : clients) {
@@ -253,7 +249,6 @@ void Server::closeConnection(int clientSocket) {
 
 Server::~Server() {
     close(masterSocket);
-
     for (const auto& client : clients) {
         close(client->getClientSocket());
     }

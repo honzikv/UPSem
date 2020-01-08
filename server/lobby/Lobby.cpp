@@ -69,6 +69,9 @@ const vector<shared_ptr<Client>>& Lobby::getClients() const {
 }
 
 void Lobby::removeClient(const shared_ptr<Client>& client) {
+    if (lobbyState == LOBBY_STATE_IN_GAME) {
+        gameController->addAutoSkip(client);
+    }
     clients.erase(remove(clients.begin(), clients.end(), client), clients.end());
 
     //Posle ostatnim klientum, ze se klient odpojil
@@ -83,7 +86,11 @@ void Lobby::removeClient(const shared_ptr<Client>& client) {
     client->setLobbyId(-1);
     client->setReady(false);
 
-    cout << "Client " << client->getUsername() << " left lobby " << id << endl;
+    cout << "Client " << client->getUsername() << " was removed from lobby " << id << endl;
+}
+
+void Lobby::addDisconnectedClient(const shared_ptr<Client>& client) {
+    disconnectedClients.push_back(client);
 }
 
 const shared_ptr<GameController>& Lobby::getGameController() const {
@@ -136,7 +143,7 @@ void Lobby::handleLobby() {
 void Lobby::checkIfReturnToLobby() {
     auto currentTime = chrono::system_clock::now();
     auto durationMillis = chrono::duration<double, milli>(currentTime - returnToLobbyStart).count();
-    if (durationMillis >= TIME_BEFORE_RETURN_TO_LOBBY) {
+    if (durationMillis >= TIME_BEFORE_RETURN_TO_LOBBY || clients.empty()) {
         lobbyState = LOBBY_STATE_WAITING;
 
         for (const auto& client : clients) {
@@ -145,6 +152,11 @@ void Lobby::checkIfReturnToLobby() {
         lobbyMessageHandler->sendUpdatePlayerListRequest();
         resetClientParticipation();
         gameController->removeData();
+
+        for (const auto& client : disconnectedClients) {
+            removeClient(client);
+        }
+        disconnectedClients.clear();
     }
 }
 
@@ -156,15 +168,11 @@ void Lobby::sendClientDisconnected(const shared_ptr<Client>& client) {
     if (!contains(client)) {
         return;
     }
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, SHOW_PLAYER_DISCONNECTED);
-    message.add(USERNAME, "Player " + client->getUsername() + " has disconnected");
-
     for (const auto& player : clients) {
         if (player == client) {
             continue;
         }
-        lobbyMessageHandler->sendMessage(player->getClientSocket(), message.serialize());
+        lobbyMessageHandler->sendShowPlayerDisconnectedRequest(player, client->getUsername());
     }
 }
 
@@ -201,5 +209,7 @@ void Lobby::restoreState(const shared_ptr<Client>& client) {
         lobbyMessageHandler->sendClientPlayerList(client);
     } else if (lobbyState == LOBBY_STATE_IN_GAME || lobbyState == LOBBY_STATE_FINISHED) {
         gameController->reconnectClient(client);
+        disconnectedClients.erase(remove(disconnectedClients.begin(), disconnectedClients.end(), client),
+                                  disconnectedClients.end());
     }
 }

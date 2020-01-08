@@ -58,12 +58,13 @@ void GameController::checkIfTimeForNextPlayer() {
     auto currentTime = chrono::system_clock::now();
     auto durationMillis = chrono::duration<double, milli>(currentTime - lastGameUpdate).count();
 
-    if (durationMillis > MAX_TIME_BEFORE_STAND_MS) {
+    if (durationMillis > MAX_TIME_BEFORE_STAND_MS || autoSkipPlayer(blackjack->getCurrentPlayer())) {
         blackjack->skipPlayer();
-        blackjack->moveToNextPlayer();
-        gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
-        sendCurrentPlayer();
-        sendBoardUpdate();
+        if (blackjack->isGameRunning()) {
+            gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
+            sendCurrentPlayer();
+            sendBoardUpdate();
+        }
     }
 }
 
@@ -135,6 +136,7 @@ void GameController::endGame() {
 void GameController::removeData() {
     blackjack = nullptr;
     confirmedClients.clear();
+    autoSkip.clear();
 }
 
 void GameController::reconnectClient(const shared_ptr<Client>& client) {
@@ -158,6 +160,19 @@ void GameController::reconnectClient(const shared_ptr<Client>& client) {
 
 bool GameController::containsConfirmedClient(const shared_ptr<Client>& client) {
     for (const auto& player : confirmedClients) {
+        if (player == client) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GameController::addAutoSkip(shared_ptr<Client> client) {
+    autoSkip.push_back(client);
+}
+
+bool GameController::autoSkipPlayer(const shared_ptr<Client>& client) {
+    for (const auto& player : autoSkip) {
         if (player == client) {
             return true;
         }

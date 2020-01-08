@@ -21,6 +21,8 @@ class GameController {
 
         vector<shared_ptr<Client>> confirmedClients;
 
+        vector<shared_ptr<Client>> autoSkip;
+
         shared_ptr<GameMessageHandler> gameMessageHandler;
 
         chrono::time_point<chrono::system_clock> preparationStart;
@@ -44,6 +46,8 @@ class GameController {
 
         void sendBoardUpdate();
 
+        void addAutoSkip(shared_ptr<Client> client);
+
         void checkIfTimeForNextPlayer();
 
         void sendCurrentPlayer();
@@ -59,6 +63,8 @@ class GameController {
         bool containsConfirmedClient(const shared_ptr<Client>& client);
 
         void removeData();
+
+        bool autoSkipPlayer(const shared_ptr<Client>& client);
 };
 
 

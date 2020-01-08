@@ -43,6 +43,11 @@ class Lobby {
         vector<shared_ptr<Client>> clients;
 
         /**
+         * Seznam klientu, kteri se behem hry odpojili
+         */
+        vector<shared_ptr<Client>> disconnectedClients;
+
+        /**
          * Limit hracu
          */
         const int limit;
@@ -125,8 +130,6 @@ class Lobby {
          */
         bool contains(const shared_ptr<Client>& client);
 
-        bool hasClientConfirmedToPlay(const shared_ptr<Client>& client);
-
         /**
          * Prida na frontu novou zpravu ke zpracovani
          * @param message zprava, kterou ma lobby zpracovat
@@ -147,8 +150,6 @@ class Lobby {
 
         void sendClientDidntConfirm(const shared_ptr<Client>& client);
 
-        bool reconnectClient(const shared_ptr<Client>& client);
-
         void sendClientDisconnected(const shared_ptr<Client>& client);
 
         void checkIfReturnToLobby();
@@ -158,6 +159,8 @@ class Lobby {
         void prepareToReturn();
 
         bool canPrepareGameStart();
+
+        void addDisconnectedClient(const shared_ptr<Client>& client);
 };
 
 
