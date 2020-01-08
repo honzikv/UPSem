@@ -116,11 +116,9 @@ void Server::selectServer() {
                             closeConnection(fileDescriptor);
                         }
                         //Socket se spravne zavrel klientem
-                    } else if (a2read == 0) {
-                        closeConnection(fileDescriptor);
-                        //Socket
                     } else {
                         closeConnection(fileDescriptor);
+                        //Socket
                     }
                 }
             }
