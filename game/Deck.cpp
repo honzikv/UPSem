@@ -15,10 +15,6 @@ shared_ptr<Card> Deck::getTop() {
     return top;
 }
 
-int Deck::cardsLeft() {
-    return cards.size();
-}
-
 void Deck::fill() {
     auto allRanks = Card::allRanks;
     auto allSuits = Card::allSuits;
@@ -34,6 +30,3 @@ void Deck::shuffle() {
     ::shuffle(cards.begin(), cards.end(), random_device());
 }
 
-void Deck::returnCard(shared_ptr<Card>& cardPtr) {
-    cards.push_back(cardPtr);
-}

@@ -24,7 +24,7 @@ class MessageHandler {
         explicit MessageHandler(Server& server);
 
         /**
-         * Funkce pro prihlaseni klienta - reconnect a login.
+         * Metoda pro prihlaseni klienta - reconnect a login.
          * @param clientSocket socket klienta
          * @param message zprava
          * @return vraci true, pokud byl klient uspesne pripojen, jinak se spojeni zavre
@@ -54,8 +54,6 @@ class MessageHandler {
         void sendClientReconnectedFromAnotherLocation(int clientSocket);
 
         void handleLogin(int clientSocket, const shared_ptr<TCPData>& message);
-
-        void sendGameFinished(const shared_ptr<Client>& client);
 
 };
 

@@ -5,7 +5,7 @@
 #include "Client.h"
 
 
-Client::Client(string id, int fileDescriptor) : username(move(id)), clientSocket(fileDescriptor) {
+Client::Client(string username, int clientSocket) : username(move(username)), clientSocket(clientSocket) {
     lastMessageReceived = chrono::system_clock::now();
 }
 
@@ -26,8 +26,8 @@ bool Client::operator!=(const Client& anotherClient) const {
     return !(anotherClient == *this);
 }
 
-void Client::setReady(bool ready) {
-    Client::ready = ready;
+void Client::setReady(bool isReady) {
+    Client::ready = isReady;
 }
 
 void Client::setClientSocket(int clientSocket) {

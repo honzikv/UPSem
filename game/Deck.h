@@ -14,23 +14,37 @@
 
 using namespace std;
 
+/**
+ * Trida reprezentujici herni balik, ma vektor karet, ktere vraci pomoci metody {@code getTop()}
+ */
 class Deck {
 
+        /**
+         * Vektor karet
+         */
         vector<shared_ptr<Card>> cards;
 
+        /**
+         * Naplni vektor karet vsemi kartami
+         */
+        void fill();
+
     public:
+        /**
+         * Konstruktor pro vytvoreni decku, balik se po vytvoreni sam zamicha a je pripraven ke hrani
+         */
         Deck();
 
+        /**
+         * Odstrani vrchni kartu v baliku
+         * @return vrati shared pointer na odstranenou kartu
+         */
         shared_ptr<Card> getTop();
 
+        /**
+         * Zamicha karty
+         */
         void shuffle();
-
-        void returnCard(shared_ptr<Card>& cardPtr);
-
-        int cardsLeft();
-
-    private:
-        void fill();
 
 };
 

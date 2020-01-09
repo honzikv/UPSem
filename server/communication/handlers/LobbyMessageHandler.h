@@ -12,6 +12,10 @@
 
 class Lobby;
 
+/**
+ * Trida, ktera odesila zpravy klientum v lobby. Vyzaduje existujici lobby, MessageHandler zije stejne dlouho jako zije
+ * instance Lobby
+ */
 class LobbyMessageHandler {
 
         /**
@@ -20,6 +24,10 @@ class LobbyMessageHandler {
         Lobby& lobby;
 
     public:
+        /**
+         * Konstruktor pro vytvoreni instance
+         * @param lobby reference na lobby
+         */
         explicit LobbyMessageHandler(Lobby& lobby);
 
         /**
@@ -58,7 +66,7 @@ class LobbyMessageHandler {
         static void sendShowPlayerDisconnectedRequest(const shared_ptr<Client>& client, const string& disconnectedPlayer);
 
         /**
-         * Posle zpravu predanou konstani referenci
+         * Posle jakykoliv string do daneho socketu
          * @param socket socket, do ktereho se zprava posle
          * @param message reference na zpravu
          */
@@ -70,17 +78,33 @@ class LobbyMessageHandler {
         void sendUpdatePlayerListRequest();
 
         /**
-         *
-         * @param client
+         * Odesle klientovi zpravu o tom ze nepotvrdil ucast
+         * @param client klient, ktery nepotvrdil ucast
          */
         static void sendClientDidntConfirm(const shared_ptr<Client>& client);
 
+        /**
+         * Posle klientovi pozadavek o zobrazeni Lobby
+         * @param client klient, kteremu zpravu zasilame
+         */
         static void sendShowLobbyRequest(const shared_ptr<Client>& client);
 
+        /**
+         * Posle vsem klientum krome {@code exclude} aby si aktualizovali seznam hracu
+         * @param exclude klient, kteremu zpravu neposilame
+         */
         void sendUpdatePlayerListRequest(const shared_ptr<Client>& exclude);
 
+        /**
+         * Vytvori seznam hracu jako serializovany string, ktery lze poslat pres tcp
+         * @return serializovany string seznamu vsech hracu pro zaslani pres tcp
+         */
         string playerListSerializedString();
 
+        /**
+         * Zasle klientovi seznam vsech hracu
+         * @param client klient, kteremu zpravu zasilame
+         */
         void sendClientPlayerList(const shared_ptr<Client>& client);
 };
 

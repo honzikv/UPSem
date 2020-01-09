@@ -5,7 +5,9 @@
 #ifndef UPSEM_RESULT_H
 #define UPSEM_RESULT_H
 
-
+/**
+ * Enum pro zjisteni vysledku tahu hrace
+ */
 enum Result {
     RESULT_NOT_YOUR_TURN,
     RESULT_HIT_AFTER_DOUBLE,

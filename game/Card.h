@@ -13,6 +13,10 @@
 
 using namespace std;
 
+/**
+ * Tato trida reprezentuje kartu, jedna se o velmi jednoduchy objekt ktery umi pouze spocitat svou hodnotu ve hre
+ * a prevest svoje hodnoty do stringu
+ */
 class Card {
     public:
         /**
@@ -41,25 +45,59 @@ class Card {
         static constexpr initializer_list<Suit> allSuits = {CLUBS, DIAMONDS, SPADES, HEARTS};
 
     private:
+        /**
+         * Hodnota karty
+         */
         Rank rank;
 
+        /**
+         * Barva karty
+         */
         Suit suit;
 
+        /**
+         * Bodova hodnota karty
+         */
         int value;
 
 
     public:
 
+        /**
+         * Konstruktor pro vytvoreni karty
+         * @param rank hodnota karty (A, ONE, TWO, THREE apod.)
+         * @param suit barva karty (SPADES, DIAMONDS apod.)
+         */
         Card(Rank rank, Suit suit);
 
+        /**
+         * Vytvori string hodnoty
+         * @return c++ string s hodnotou karty
+         */
         string rankToString();
 
+        /**
+         * Vrati blackjackovou bodovou hodnotu
+         * @return integer s hodnotou instance karty
+         */
         int getValue() const;
 
+        /**
+         * Getter ranku karty
+         * @return rank instance karty
+         */
         Rank getRank() const;
 
+        /**
+         * Vrati barvu ve stringu
+         * @return c++ string s hodnotou barvy
+         */
         string suitToString();
 
+        /**
+         * Vrati string se vsemi parametry instance
+         * @return string se vsemi parametry instance pro serializaci po siti
+         */
         string toString();
 };
 

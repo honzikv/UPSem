@@ -12,22 +12,52 @@
 
 using namespace std;
 
+/**
+ * Objekt pro prenos vysledku tahu hrace
+ */
 class TurnResult {
 
-     const Result result;
+        /**
+         * Vysledek tahu
+         */
+        const Result result;
 
-     const shared_ptr<Card> card;
+        /**
+         * Ziskana karta (muze byt nullptr)
+         */
+        const shared_ptr<Card> card;
 
-     const shared_ptr<Client> client;
+        /**
+         * Hrac, ktery kolo zahral
+         */
+        const shared_ptr<Client> client;
 
     public:
+        /**
+         * Konstruktor pro vytvoreni DTO
+         * @param result vysledek tahu
+         * @param card tazena karta (optional)
+         * @param client hrac, ktery kolo zahral
+         */
         TurnResult(Result result, shared_ptr<Card> card, shared_ptr<Client> client);
 
     public:
+        /**
+         * Getter pro enum result
+         * @return vrati vysledek
+         */
         const Result getResult() const;
 
+        /**
+         * Getter pro tazenou kartu
+         * @return vrati tazenou kartu
+         */
         const shared_ptr<Card>& getCard() const;
 
+        /**
+         * Getter pro hrace
+         * @return vrati referenci na hrace
+         */
         const shared_ptr<Client>& getClient() const;
 };
 
