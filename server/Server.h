@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <memory>
-#include <signal.h>
+#include <csignal>
 #include <sys/ioctl.h>
 
 #include "client/Client.h"
@@ -35,11 +35,14 @@ class Lobby;
 
 class MessageHandler;
 
+/**
+ * Trida, ktera uklada informace o serveru
+ */
 class Server {
         /*
          * Master socket pro select()
          */
-        int masterSocket{};
+        int masterSocket = 0;
 
         /**
          * Port serveru
@@ -88,11 +91,18 @@ class Server {
         shared_ptr<MessageHandler> messageHandler;
 
     public:
-        virtual ~Server();
-
-    public:
-
+        /**
+         * Konstruktor pro vytvoreni serveru
+         * @param ip ip adresa serveru
+         * @param port port serveru
+         * @param lobbyCount pocet hernich mistnosti
+         */
         Server(string ip, int port, int lobbyCount);
+
+        /**
+         * Destruktor, ktery se zavola po ukonceni programu
+         */
+        virtual ~Server();
 
         /**
          * Najde klienta podle id file descriptoru socketu
@@ -108,20 +118,47 @@ class Server {
          */
         shared_ptr<Lobby> getLobby(int lobbyId);
 
+        /**
+         * Vrati klienta podle jeho username, pokud neni nalezen vrati {@code nullptr}
+         * @param username uzivatelske jmeno klienta
+         * @return shared pointer klienta nebo nullptr pokud klient nebyl nalezen
+         */
         shared_ptr<Client> getClientByUsername(const string& username);
 
+        /**
+         * Vrati vsechny herni mistnosti na serveru
+         * @return referenci na vektor s hernimi mistnostmi
+         */
         const vector<shared_ptr<Lobby>>& getLobbies();
 
+        /**
+         * Zjisti zda-li je lobby dostupna pro pripojeni
+         * @param lobbyId id lobby
+         * @return true pokud se do lobby lze pripojit, jinak false
+         */
         bool isLobbyJoinable(int lobbyId);
 
+        /**
+         * Zaregistruje noveho klienta
+         * @param username jmeno klienta
+         * @param clientSocket aktualni socket klienta
+         */
         void registerClient(const string& username, int clientSocket);
 
+        /**
+         * Prida do vektoru {@code socketsToClose} novy socket, ktery se po selectu a cteni zprav zavre
+         * @param clientSocket cislo socketu
+         */
         void closeConnection(int clientSocket);
 
-        int setupFileDescriptors(int maxSocket);
-
+        /**
+         * Nekonecna smycka se selectem
+         */
         void selectServer();
 
+        /**
+         * Odpoji vsechny klienty, kteri dlouho neodpovedeli nebo se maji odpojit
+         */
         void disconnectClients();
 };
 

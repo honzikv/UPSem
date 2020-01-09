@@ -9,25 +9,51 @@
 #include "../../../game/Blackjack.h"
 #include "../../communication/serialization/TCPData.h"
 
+using namespace std::chrono;
+
 class Lobby;
 
 class GameMessageHandler;
 
+/**
+ * Trida, ktera slouzi k ovladani hry, je soucasti lobby a nemela by se vytvaret jinde nez v lobby
+ */
 class GameController {
 
+        /**
+         * Reference na lobby
+         */
         Lobby& lobby;
 
+        /**
+         * Pointer na blackjack ma ulozeny pouze v sobe a nikomu ho nepredava
+         */
         unique_ptr<Blackjack> blackjack;
 
+        /**
+         * Seznam potvrzenych klientu
+         */
         vector<shared_ptr<Client>> confirmedClients;
 
+        /**
+         * Seznam klientu, pro ktere udela autoskip - takovi klienti, kteri ve hre dali Leave, protoze si hrani rozmysleli
+         */
         vector<shared_ptr<Client>> autoSkip;
 
+        /**
+         * GameMessageHandler pro zasilani dotazu a odpovedi klientum
+         */
         shared_ptr<GameMessageHandler> gameMessageHandler;
 
-        chrono::time_point<chrono::system_clock> preparationStart;
+        /**
+         * Cas pripravy hry
+         */
+        time_point<system_clock> preparationStart;
 
-        chrono::time_point<chrono::system_clock> lastGameUpdate;
+        /**
+         * Posledni update hry
+         */
+        time_point<system_clock> lastGameUpdate;
 
     public:
         explicit GameController(Lobby& lobby);

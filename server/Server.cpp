@@ -248,6 +248,7 @@ void Server::closeConnection(int clientSocket) {
 }
 
 Server::~Server() {
+    //Destruktor odpoji vsechny klienty a master socket
     close(masterSocket);
     for (const auto& client : clients) {
         close(client->getClientSocket());

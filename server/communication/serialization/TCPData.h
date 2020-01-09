@@ -18,32 +18,64 @@
 
 using namespace std;
 
+/**
+ * Trida, ktera se stara o serializaci a deserializaci stringu z bufferu
+ */
 class TCPData {
 
+        /**
+         * Typ zpravy
+         */
         DataType dataType;
 
+        /**
+         * Hashmapa pro ulozeni poli a jejich hodnot
+         */
         unordered_map<string, string> fields;
 
+        /**
+         * Flag zda-li je zprava upravitelna
+         */
         bool isEditable = true;
 
     public:
+        /**
+         * Konstruktor pro serializaci
+         * @param dataType typ zpravy - request nebo response
+         */
         explicit TCPData(DataType dataType);
 
         /**
-         * Predpoklada prectenou zpravu z bufferu, zpravy pouzivaji oddeleni {}\n
+         * Konstruktor pro deserializaci zpravy ze stringu {@code message}
          * @param message zprava, ktera se ma zpracovat
          */
         explicit TCPData(const string& message);
 
+        /**
+         * Vrati hodnotu daneho pole
+         * @param field nazev pole
+         * @return string s hodnotou
+         */
         string valueOf(const string& field);
 
+        /**
+         * Prida par pole hodnota
+         * @param field nazev pole
+         * @param value hodnota
+         */
         void add(const string& field, const string& value);
 
+        /**
+         * serializuje zpravu a vrati vysledek jako string
+         * @return serializovana zprava
+         */
         string serialize();
 
-        bool isValid() const;
-
     private:
+        /**
+         * Deserializuje string, pokud nelze hodi DeserializationException
+         * @param message zprava, kterou deserializujeme
+         */
         void deserialize(string message);
 };
 

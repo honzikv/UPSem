@@ -10,9 +10,9 @@
 
 MessageHandler::MessageHandler(Server& server) : server(server) {}
 
-void MessageHandler::sendMessage(int socket, const string& message) {
-    if (send(socket, message.c_str(), message.size(), 0) <= 0) {
-        server.closeConnection(socket);
+void MessageHandler::sendMessage(int clientSocket, const string& message) {
+    if (send(clientSocket, message.c_str(), message.size(), 0) <= 0) {
+        server.closeConnection(clientSocket);
     }
 }
 
@@ -177,10 +177,3 @@ void MessageHandler::sendClientReconnectedFromAnotherLocation(int clientSocket) 
     message.add(REQUEST, CONNECTION_CLOSED);
     sendMessage(clientSocket, message.serialize());
 }
-
-void MessageHandler::sendGameFinished(const shared_ptr<Client>& client) {
-    auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, REMOVED_FROM_LOBBY);
-    sendMessage(client->getClientSocket(), message.serialize());
-}
-

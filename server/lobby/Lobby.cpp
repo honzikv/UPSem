@@ -141,8 +141,8 @@ void Lobby::handleLobby() {
 }
 
 void Lobby::checkIfReturnToLobby() {
-    auto currentTime = chrono::system_clock::now();
-    auto durationMillis = chrono::duration<double, milli>(currentTime - returnToLobbyStart).count();
+    auto currentTime = system_clock::now();
+    auto durationMillis = duration<double, milli>(currentTime - returnToLobbyStart).count();
     if (durationMillis >= TIME_BEFORE_RETURN_TO_LOBBY || clients.empty()) {
         lobbyState = LOBBY_STATE_WAITING;
 
@@ -181,7 +181,7 @@ void Lobby::setLobbyState(LobbyState lobbyState) {
 }
 
 void Lobby::prepareToReturn() {
-    returnToLobbyStart = chrono::system_clock::now();
+    returnToLobbyStart = system_clock::now();
 }
 
 bool Lobby::canPrepareGameStart() {

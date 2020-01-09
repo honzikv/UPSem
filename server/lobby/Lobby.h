@@ -20,9 +20,9 @@
 #include "../communication/serialization/TCPData.h"
 #include "../client/ClientData.h"
 #include "../../Game/Blackjack.h"
-#include "GamePreparation.h"
 
 using namespace std;
+using namespace std::chrono;
 
 class Server;
 
@@ -62,6 +62,9 @@ class Lobby {
          */
         int clientsReady = 0;
 
+        /**
+         * Aktualni stav lobby
+         */
         LobbyState lobbyState = LOBBY_STATE_WAITING;
 
         /**
@@ -69,9 +72,16 @@ class Lobby {
          */
         shared_ptr<LobbyMessageHandler> lobbyMessageHandler;
 
+        /**
+         * Game controller
+         */
         shared_ptr<GameController> gameController = nullptr;
 
-        chrono::time_point<chrono::system_clock> returnToLobbyStart;
+        /**
+         * Time point kdy se ukoncila hra - pro zobrazeni vysledku po urcitou dobu a pote odeslani pozdavku na navrat
+         * do lobby
+         */
+        time_point<system_clock> returnToLobbyStart;
 
     public:
         /**
@@ -81,14 +91,34 @@ class Lobby {
          */
         Lobby(int limit, int id);
 
+        /**
+         * Getter pro id lobby
+         * @return id lobby
+         */
         int getId() const;
 
+        /**
+         * Getter pro stav lobby
+         * @return stav lobby
+         */
         LobbyState getLobbyState() const;
 
+        /**
+         * Setter pro stav lobby
+         * @param lobbyState stav lobby, ktery chceme nastavit
+         */
         void setLobbyState(LobbyState lobbyState);
 
+        /**
+         * Obnovi stav klienta
+         * @param client klient, kteremu obnovujeme stav
+         */
         void restoreState(const shared_ptr<Client>& client);
 
+        /**
+         * Vrati, zda-li je lobby dostupna pro pripjeni
+         * @return
+         */
         bool isJoinable() const;
 
         /**
@@ -121,6 +151,9 @@ class Lobby {
          */
         void incrementPlayersReady();
 
+        /**
+         * Resetuje vsem klientum ucast ve hre
+         */
         void resetClientParticipation();
 
         /**
@@ -148,18 +181,44 @@ class Lobby {
          */
         const vector<shared_ptr<Client>>& getClients() const;
 
+        /**
+         * Posle klientovi zpravu ze nepotvrdil ucast
+         * @param client klient, ktery nepotvrdil ucast
+         */
         void sendClientDidntConfirm(const shared_ptr<Client>& client);
 
+        /**
+         * Posle vsem klientum zpravu o odpojeni klienta
+         * @param client klient, ktery se odpojil
+         */
         void sendClientDisconnected(const shared_ptr<Client>& client);
 
+        /**
+         * Zkontroluje jestli je cas se vratit do lobby po zobrazeni vysledku hry
+         */
         void checkIfReturnToLobby();
 
+        /**
+         * Vrati referenci na shared pointer game controlleru
+         * @return Vrati referenci na shared pointer game controlleru
+         */
         const shared_ptr<GameController>& getGameController() const;
 
+        /**
+         * Nastavi cas pro navrat zpet do lobby
+         */
         void prepareToReturn();
 
+        /**
+         * Zjisti, zda-li se muze vsem klientum poslat pozadavek na sazku
+         * @return true pokud muze priprava zacit
+         */
         bool canPrepareGameStart();
 
+        /**
+         * Prida odpojeneho klienta pro pozdejsi odstraneni z lobby pokud se nepripoji zpet
+         * @param client klient, ktery se odpojil behem hry
+         */
         void addDisconnectedClient(const shared_ptr<Client>& client);
 };
 
