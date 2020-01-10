@@ -99,7 +99,7 @@ void Server::selectServer() {
                             /*
                              * klient odesila zpravy ve formatu {}\n, tzn. muzeme je rozdelit pomoci \n znaku,
                              * pokud je jakakoliv zprava poskozena, dojde k zavreni spojeni - parser zprav hodi
-                             * DeserializationException a spojeni se ze strany serveru uzavre
+                             * SerializationException a spojeni se ze strany serveru uzavre
                              */
                             string temp;
                             while (getline(stringStream, temp, '\n')) {

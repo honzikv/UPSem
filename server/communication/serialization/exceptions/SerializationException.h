@@ -10,14 +10,15 @@
 
 using namespace std;
 
-class DeserializationException : public exception {
+/**
+ * Chyba pri (de)serializaci
+ */
+class SerializationException : public exception {
 
         string message;
 
     public:
-        explicit DeserializationException(string message = "Error while deserializing");
-
-        const char* what();
+        explicit SerializationException(string message = "Error while deserializing");
 
 };
 

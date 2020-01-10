@@ -32,8 +32,8 @@ add_executable(UPSServer
         server/client/ClientData.cpp
         server/communication/handlers/MessageHandler.h
         server/communication/handlers/MessageHandler.cpp
-        server/communication/serialization/exceptions/DeserializationException.cpp
-        server/communication/serialization/exceptions/DeserializationException.h
+        server/communication/serialization/exceptions/SerializationException.cpp
+        server/communication/serialization/exceptions/SerializationException.h
         server/client/player/PlayerInfo.cpp
         server/client/player/PlayerInfo.h
         game/Result.h

@@ -137,8 +137,9 @@ void Lobby::handleLobby() {
              */
             if (gameController->isGameFinished()) {
                 gameController->endGame();
+            } else {
+                gameController->checkIfTimeForNextPlayer();
             }
-            gameController->checkIfTimeForNextPlayer();
             break;
 
         case LOBBY_STATE_FINISHED:

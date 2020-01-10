@@ -14,7 +14,7 @@
 #include <regex>
 #include <iostream>
 #include "DataType.h"
-#include "exceptions/DeserializationException.h"
+#include "exceptions/SerializationException.h"
 
 using namespace std;
 
@@ -73,7 +73,7 @@ class TCPData {
 
     private:
         /**
-         * Deserializuje string, pokud nelze hodi DeserializationException
+         * Deserializuje string, pokud nelze hodi SerializationException
          * @param message zprava, kterou deserializujeme
          */
         void deserialize(string message);

@@ -11,9 +11,10 @@ void TCPData::deserialize(string message) {
     //Parsing objektu
     if (data->find_first_of("{") != 0 || data->find_last_of("}") != data->length() - 1) {
         cerr << "error while parsing data" << endl;
-        throw exception();
+        throw SerializationException();
     }
 
+    //Smazani nepotrebnych zavorek
     data->erase(remove(data->begin(), data->end(), '{'), data->end());
     data->erase(remove(data->begin(), data->end(), '}'), data->end());
 
@@ -29,7 +30,7 @@ void TCPData::deserialize(string message) {
         int doubleColonPosition;
         if ((doubleColonPosition = field.find(':')) == string::npos || doubleColonPosition == field.length() - 1) {
             cout << "incorrect input" << endl;
-            throw DeserializationException();
+            throw SerializationException();
         }
 
         this->fields.emplace(field.substr(0, doubleColonPosition),
@@ -61,7 +62,7 @@ string TCPData::serialize() {
 
 void TCPData::add(const string& field, const string& value) {
     if (!isEditable) {
-        throw exception();
+        throw SerializationException();
     }
 
     fields.emplace(field, value);
