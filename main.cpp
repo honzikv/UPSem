@@ -1,4 +1,4 @@
-#include "Server/Server.h"
+#include "server/Server.h"
 
 #define DEFAULT_PORT 4431
 #define DEFAULT_LOBBY_COUNT 3

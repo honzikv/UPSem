@@ -19,7 +19,7 @@
 #include "LobbyState.h"
 #include "../communication/serialization/TCPData.h"
 #include "../client/ClientData.h"
-#include "../../Game/Blackjack.h"
+#include "../../game/Blackjack.h"
 
 using namespace std;
 using namespace std::chrono;
