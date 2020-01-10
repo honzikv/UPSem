@@ -9,7 +9,7 @@
 #include <vector>
 #include <memory>
 #include "Deck.h"
-#include "../Server/client/Client.h"
+#include "../server/client/Client.h"
 #include "Result.h"
 #include "Dealer.h"
 #include "TurnResult.h"
