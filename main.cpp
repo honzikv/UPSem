@@ -6,6 +6,12 @@
 #define MAX_LOBBY_COUNT 10
 #define LOCALHOST "127.0.0.1"
 
+/**
+ * Jednoducha funkce pro urceni, zda-li je string cislo nebo ne - stoi je spatne napsana a parsuje i 332randomstring na
+ * 332
+ * @param numberString string s cislem
+ * @return true pokud je cislo
+ */
 bool isNumber(const string& numberString) {
     return !numberString.empty() && find_if(numberString.begin(),
                                             numberString.end(),
@@ -14,6 +20,11 @@ bool isNumber(const string& numberString) {
                                             }) == numberString.end();
 }
 
+/**
+ * rozparsuje string a zjisti jestli je port
+ * @param portString string s portem
+ * @return -1 pokud neni port, jinak cislo portu
+ */
 int parsePort(const string& portString) {
     if (!isNumber(portString)) {
         return -1;
@@ -23,6 +34,12 @@ int parsePort(const string& portString) {
     }
 }
 
+/**
+ * Zpracuje string a vrati pocet mistnosti
+ * @param lobbyCountString string s poctem hernich mistnosti
+ * @return -1 pokud string neni cislo nebo je mensi nez 1 nebo je vetsi nez maximalni pocet mistnosti, jinak
+ * maximalni pocet mistnosti
+ */
 int parseLobbyCount(const string& lobbyCountString) {
     if (!isNumber(lobbyCountString)) {
         return -1;
@@ -32,11 +49,21 @@ int parseLobbyCount(const string& lobbyCountString) {
     }
 }
 
+/**
+ * Zjisti jestli je string s ip adresou pouzitelny
+ * @param ipString string s ip adresou
+ * @return true pokud lze pouzit, jinak false
+ */
 bool isIPParseable(const string& ipString) {
     unsigned char buf[sizeof(struct in6_addr)];
     return inet_pton(AF_INET, ipString.c_str(), buf) == 1;
 }
 
+/**
+ * Zkontroluje vysledky zpracovani vstupu a pokud je nejaky vstup spatny ukonci program
+ * @param port vysledek parsovani portu
+ * @param lobbyCount vysledek parsovani poctu hernich mistnosti
+ */
 void checkErrors(int port, int lobbyCount) {
     if (port == -1) {
         cerr << "Entered port is invalid, it must be an integer between 1 and " << MAX_PORT << endl;
@@ -49,6 +76,11 @@ void checkErrors(int port, int lobbyCount) {
     }
 }
 
+/**
+ * Main funkce
+ * @param argc pocet argumentu >= 1
+ * @param args argumenty
+ */
 int main(int argc, char** args) {
     if (argc == 1) {
         auto server = make_shared<Server>(LOCALHOST, DEFAULT_PORT, DEFAULT_LOBBY_COUNT);
