@@ -19,6 +19,11 @@ class MessageHandler {
          */
         Server& server;
 
+        /**
+         * Regularni vyraz pro validaci username
+         */
+        regex usernameRegex = regex("^[a-zA-Z0-9]+$");
+
 
     public:
         explicit MessageHandler(Server& server);

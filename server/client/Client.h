@@ -16,6 +16,7 @@
 #include "player/PlayerInfo.h"
 
 using namespace std;
+using namespace std::chrono;
 
 /**
  * Trida s informacemi o klientovi, ktery se autentifikoval na serveru
@@ -45,7 +46,7 @@ class Client {
         /**
          * Cas posledni zpravy - pro odpojeni mrtveho pripojeni
          */
-        chrono::time_point<chrono::system_clock> lastMessageReceived;
+        time_point<system_clock> lastMessageReceived;
 
         /**
          * Info ve hre - ruka, vsazena castka

@@ -98,6 +98,7 @@ const shared_ptr<GameController>& Lobby::getGameController() const {
 }
 
 void Lobby::handleLobby() {
+    //Zpracovani vsech nezpracovanych zprav
     while (!unprocessedMessages.empty()) {
         auto message = unprocessedMessages.front();
         unprocessedMessages.pop();
@@ -118,6 +119,7 @@ void Lobby::handleLobby() {
             break;
 
         case LOBBY_STATE_PREPARING:
+            //Pokud vyprsel cas kdy mohli vsichni vlozit sazky, zkontroluje se jestli je hra hratelna a pokud ano odstartuje se
             if (gameController->hasPreparationTimeExpired()) {
                 if (gameController->isPlayable()) {
                     gameController->startGame();
@@ -128,6 +130,11 @@ void Lobby::handleLobby() {
             break;
 
         case LOBBY_STATE_IN_GAME:
+            /*
+             * Pokud je hra dokoncena, GameController posle vsem vysledky, jinak se kontroluje,
+             * jestli je cas na dalsiho hrace - odpovedi prichazeji asynchronne - tzn. odpoved musi prijit do daneho
+             * casoveho limitu
+             */
             if (gameController->isGameFinished()) {
                 gameController->endGame();
             }
@@ -135,6 +142,7 @@ void Lobby::handleLobby() {
             break;
 
         case LOBBY_STATE_FINISHED:
+            //Kontrola jestli vyprsel cas pro navrat do lobby
             checkIfReturnToLobby();
             break;
     }
@@ -143,9 +151,12 @@ void Lobby::handleLobby() {
 void Lobby::checkIfReturnToLobby() {
     auto currentTime = system_clock::now();
     auto durationMillis = duration<double, milli>(currentTime - returnToLobbyStart).count();
+
+    //Pokud nastal cas pro navrat do lobby
     if (durationMillis >= TIME_BEFORE_RETURN_TO_LOBBY || clients.empty()) {
         lobbyState = LOBBY_STATE_WAITING;
 
+        //Vsem klientum odesleme pozadavek na zobrazeni lobby, resetujeme jejich ucast a odstranime data o hre
         for (const auto& client : clients) {
             lobbyMessageHandler->sendShowLobbyRequest(client);
         }
@@ -153,6 +164,7 @@ void Lobby::checkIfReturnToLobby() {
         resetClientParticipation();
         gameController->removeData();
 
+        //Vsichni klienti co se v dobe hry odpojili budou odstraneni
         for (const auto& client : disconnectedClients) {
             removeClient(client);
         }

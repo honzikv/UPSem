@@ -82,6 +82,12 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
     auto username = message->valueOf(USERNAME);
     auto client = server.getClientByUsername(username);
 
+    if (!regex_match(username, usernameRegex)) {
+        cout << "Incorrect username format" << endl;
+        server.closeConnection(clientSocket);
+        return;
+    }
+
     //Pokud instance klienta k loginu neexistuje vytvorime novy
     if (client == nullptr) {
         server.registerClient(username, clientSocket);

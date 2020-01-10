@@ -6,7 +6,7 @@
 #include "lobby/Lobby.h"
 #include "communication/handlers/MessageHandler.h"
 
-Server::Server(const string ip, int port, int lobbyCount) : ip(ip), port(port) {
+Server::Server(const string& ip, int port, int lobbyCount) : ip(ip), port(port) {
 
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
@@ -17,7 +17,7 @@ Server::Server(const string ip, int port, int lobbyCount) : ip(ip), port(port) {
 
 void Server::selectServer() {
 
-    //create a master socket
+    //vytvoreni master socketu serveru
     if ((masterSocket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         cerr << "Initializing socket failed, please try again later" << endl;
         exit(EXIT_FAILURE);
@@ -31,6 +31,7 @@ void Server::selectServer() {
         exit(EXIT_FAILURE);
     }
 
+    //nastaveni adresy
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = inet_addr(ip.c_str());
     address.sin_port = htons(port);
@@ -41,6 +42,7 @@ void Server::selectServer() {
         exit(EXIT_FAILURE);
     }
 
+    //listen
     if (listen(masterSocket, 3) < 0) {
         cerr << "Listen failed, please try again later" << endl;
         exit(EXIT_FAILURE);
@@ -82,6 +84,7 @@ void Server::selectServer() {
                              << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
                     }
                 } else {
+                    //zjisteni poctu bytu ke cteni
                     ioctl(fileDescriptor, FIONREAD, &a2read);
                     if (a2read > 0) {
                         memset(buffer, 0, MAX_BUFFER_SIZE_BYTES);
@@ -110,9 +113,10 @@ void Server::selectServer() {
                         }
                         catch (exception&) {
                             cerr << "client sent incorrect input, disconnecting" << endl;
+                            //uzavreme spojeni, nevyhovuje protokolu
                             closeConnection(fileDescriptor);
                         }
-                        //Socket se spravne zavrel klientem
+                        //jinak uzavreme spojeni - nevyhovuje protokolu
                     } else {
                         closeConnection(fileDescriptor);
                     }
@@ -120,7 +124,10 @@ void Server::selectServer() {
             }
         }
 
+        //odpojeni vsech klientu, kteri porusili protokol nebo jsou timed out
         disconnectClients();
+
+        //lobby handling
         for (const auto& lobby : lobbies) {
             lobby->handleLobby();
         }
@@ -248,7 +255,10 @@ void Server::closeConnection(int clientSocket) {
 }
 
 Server::~Server() {
-    //Destruktor odpoji vsechny klienty a master socket
+    /*
+     * Destruktor odpoji vsechny klienty a master socket - teoreticky to OS udela za nas (resp. WSL to udelalo vzdy)
+     * a nema smysl resit, ale jedna se o good practice
+     */
     close(masterSocket);
     for (const auto& client : clients) {
         close(client->getClientSocket());

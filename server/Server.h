@@ -97,7 +97,7 @@ class Server {
          * @param port port serveru
          * @param lobbyCount pocet hernich mistnosti
          */
-        Server(string ip, int port, int lobbyCount);
+        Server(const string& ip, int port, int lobbyCount);
 
         /**
          * Destruktor, ktery se zavola po ukonceni programu
