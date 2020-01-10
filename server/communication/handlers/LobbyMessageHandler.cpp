@@ -30,6 +30,7 @@ void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const
         lobby.getGameController()->handlePlayerTurn(client, message);
     } else if (response == DECLINE_PARTICIPATION) {
         lobby.removeClient(client);
+        this->sendDeclineAcknowledged(client);
     }
 
 }
@@ -104,5 +105,11 @@ void LobbyMessageHandler::sendClientDidntConfirm(const shared_ptr<Client>& clien
 void LobbyMessageHandler::sendShowLobbyRequest(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, JOIN_LOBBY);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
+void LobbyMessageHandler::sendDeclineAcknowledged(const shared_ptr<Client>& client) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, REMOVED_FROM_LOBBY);
     sendMessage(client->getClientSocket(), message.serialize());
 }

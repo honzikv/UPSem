@@ -106,6 +106,8 @@ class LobbyMessageHandler {
          * @param client klient, kteremu zpravu zasilame
          */
         void sendClientPlayerList(const shared_ptr<Client>& client);
+
+        static void sendDeclineAcknowledged(const shared_ptr<Client>& client);
 };
 
 

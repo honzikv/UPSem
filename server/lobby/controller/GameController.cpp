@@ -14,7 +14,6 @@ void GameController::cancelGame() {
     for (const auto& client : confirmedClients) {
         gameMessageHandler->sendGameCouldNotStart(client);
     }
-
     confirmedClients.clear();
     lobby.setLobbyState(LOBBY_STATE_WAITING);
     lobby.resetClientParticipation();
@@ -22,7 +21,7 @@ void GameController::cancelGame() {
 
 void GameController::startGame() {
     for (const auto& client : lobby.getClients()) {
-        if (!containsConfirmedClient(client)) {
+        if (!this->containsConfirmedClient(client)) {
             lobby.removeClient(client);
             lobby.sendClientDidntConfirm(client);
         }
@@ -33,10 +32,10 @@ void GameController::startGame() {
     for (const auto& client : blackjack->getPlayers()) {
         gameMessageHandler->sendPrepareGameRequest(client);
     }
-    sendBoardUpdate();
+    this->sendBoardUpdate();
 
     gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
-    sendCurrentPlayer();
+    this->sendCurrentPlayer();
     lobby.setLobbyState(LOBBY_STATE_IN_GAME);
     lastGameUpdate = chrono::system_clock::now();
 }
