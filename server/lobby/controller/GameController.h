@@ -117,6 +117,8 @@ class GameController {
          */
         void sendCurrentPlayer();
 
+        void sendPlayerSkipped(const shared_ptr<Client>& player);
+
         /**
          * Zpracuje hracuv tah
          * @param player reference na shared pointer hrace

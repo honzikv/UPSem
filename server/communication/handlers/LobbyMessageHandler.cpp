@@ -30,7 +30,7 @@ void LobbyMessageHandler::handleResponse(const shared_ptr<Client>& client, const
         lobby.getGameController()->handlePlayerTurn(client, message);
     } else if (response == DECLINE_PARTICIPATION) {
         lobby.removeClient(client);
-        this->sendDeclineAcknowledged(client);
+        sendDeclineAcknowledged(client);
     }
 
 }

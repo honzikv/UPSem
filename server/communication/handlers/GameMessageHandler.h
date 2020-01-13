@@ -77,6 +77,13 @@ class GameMessageHandler {
         static void sendCurrentPlayer(const shared_ptr<Client>& client, const string& username);
 
         /**
+         * Posle klientovi, ze hrac byl preskocen kvuli neaktivite
+         * @param client klient, kteremu zpravu zasilame
+         * @param username uzivatel, ktery byl preskocen
+         */
+        static void sendPlayerSkipped(const shared_ptr<Client>& client, const string& username);
+
+        /**
          * Zasle hraci zpravu ze neni na rade
          * @param client klient, kteremu zpravu zasilame
          */

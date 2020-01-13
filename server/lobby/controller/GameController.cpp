@@ -58,12 +58,20 @@ void GameController::checkIfTimeForNextPlayer() {
     auto durationMillis = duration<double, milli>(currentTime - lastGameUpdate).count();
 
     if (durationMillis > MAX_TIME_BEFORE_STAND_MS || autoSkipPlayer(blackjack->getCurrentPlayer())) {
+        sendPlayerSkipped(blackjack->getCurrentPlayer());
         blackjack->skipPlayer();
         if (blackjack->isGameRunning()) {
             gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
             sendCurrentPlayer();
             sendBoardUpdate();
+            lastGameUpdate = system_clock::now();
         }
+    }
+}
+
+void GameController::sendPlayerSkipped(const shared_ptr<Client>& player) {
+    for (const auto& client : blackjack->getPlayers()) {
+        gameMessageHandler->sendPlayerSkipped(client, player->getUsername());
     }
 }
 

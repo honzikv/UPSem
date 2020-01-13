@@ -67,6 +67,13 @@ void GameMessageHandler::sendCurrentPlayer(const shared_ptr<Client>& client, con
     sendMessage(client->getClientSocket(), message.serialize());
 }
 
+void GameMessageHandler::sendPlayerSkipped(const shared_ptr<Client>& client, const string& username) {
+    auto message = TCPData(DATATYPE_REQUEST);
+    message.add(REQUEST, SHOW_PLAYER_SKIPPED);
+    message.add(USERNAME, username);
+    sendMessage(client->getClientSocket(), message.serialize());
+}
+
 void GameMessageHandler::sendConfirmParticipationRequest(const shared_ptr<Client>& client) {
     auto message = TCPData(DATATYPE_REQUEST);
     message.add(REQUEST, CONFIRM_PARTICIPATION);
