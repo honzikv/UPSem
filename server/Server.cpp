@@ -6,7 +6,7 @@
 #include "lobby/Lobby.h"
 #include "communication/handlers/MessageHandler.h"
 
-Server::Server(const string& ip, int port, int lobbyCount) : ip(ip), port(port) {
+Server::Server(const string &ip, int port, int lobbyCount) : ip(ip), port(port) {
 
     for (auto i = 0; i < lobbyCount; i++) {
         lobbies.push_back(make_shared<Lobby>(MAX_CLIENTS_PER_LOBBY, i));
@@ -25,7 +25,7 @@ void Server::selectServer() {
 
     auto option = 1;
     //nastaveni socketu aby prijmal vice spojeni
-    if (setsockopt(masterSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &option,
+    if (setsockopt(masterSocket, SOL_SOCKET, SO_REUSEADDR, (char *) &option,
                    sizeof(option)) < 0) {
         cerr << "Setting socket option failed, please try again later" << endl;
         exit(EXIT_FAILURE);
@@ -37,7 +37,7 @@ void Server::selectServer() {
     address.sin_port = htons(port);
 
     //bind na port
-    if (bind(masterSocket, (struct sockaddr*) &address, sizeof(address)) < 0) {
+    if (bind(masterSocket, (struct sockaddr *) &address, sizeof(address)) < 0) {
         cerr << "Bind failed, please try again later" << endl;
         exit(EXIT_FAILURE);
     }
@@ -74,8 +74,8 @@ void Server::selectServer() {
             if (FD_ISSET(fileDescriptor, &tests)) {
                 //Pokud je neco na server socketu, jedna se o novy pokus o pripojeni
                 if (fileDescriptor == masterSocket) {
-                    auto clientFileDescriptor = accept(masterSocket, (sockaddr*) &clientAddress,
-                                                       (socklen_t*) &addrlen);
+                    auto clientFileDescriptor = accept(masterSocket, (sockaddr *) &clientAddress,
+                                                       (socklen_t *) &addrlen);
                     FD_SET(clientFileDescriptor, &clientFileDescriptors);
                     if (clientFileDescriptor < 0) {
                         cerr << "Error while accepting client" << endl;
@@ -106,12 +106,12 @@ void Server::selectServer() {
                                 messageVector.push_back(temp);
                             }
 
-                            for (const auto& messageFromBuffer : messageVector) {
+                            for (const auto &messageFromBuffer : messageVector) {
                                 auto message = make_shared<TCPData>(messageFromBuffer);
                                 messageHandler->handleMessage(fileDescriptor, message);
                             }
                         }
-                        catch (exception&) {
+                        catch (exception &) {
                             cerr << "client sent incorrect input, disconnecting" << endl;
                             //uzavreme spojeni, nevyhovuje protokolu
                             closeConnection(fileDescriptor);
@@ -128,7 +128,7 @@ void Server::selectServer() {
         disconnectClients();
 
         //lobby handling
-        for (const auto& lobby : lobbies) {
+        for (const auto &lobby : lobbies) {
             lobby->handleLobby();
         }
     }
@@ -142,11 +142,13 @@ void Server::disconnectClients() {
      * pokud se neozve do delsi doby, jsou veskera data o klientovi odstranena.
      */
     auto currentTime = system_clock::now();
-    for (const auto& client : clients) {
+    for (const auto &client : clients) {
         auto durationMillis = duration<double, milli>(
                 currentTime - client->getLastMessageReceived()).count();
 
         if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS && client->getClientSocket() != -1) {
+            cout << "Client " << client->getUsername() << " with socket no. " << client->getClientSocket()
+                 << " has reached timeout and will be disconnected" << endl;
             closeConnection(client->getClientSocket());
         }
     }
@@ -181,7 +183,7 @@ void Server::disconnectClients() {
      */
     for (auto socketToClose : socketsToClose) {
         close(socketToClose);
-        cout << "communication with socket " << socketToClose << " was closed" << endl;
+        cout << "Communication with socket " << socketToClose << " was closed" << endl;
         auto client = getClientBySocket(socketToClose);
         if (client == nullptr) {
             continue;
@@ -206,7 +208,7 @@ void Server::disconnectClients() {
 }
 
 shared_ptr<Client> Server::getClientBySocket(int socket) {
-    for (const auto& client : clients) {
+    for (const auto &client : clients) {
         if (client->getClientSocket() == socket) {
             return client;
         }
@@ -215,7 +217,7 @@ shared_ptr<Client> Server::getClientBySocket(int socket) {
 }
 
 shared_ptr<Lobby> Server::getLobby(int lobbyId) {
-    for (const auto& lobbyPtr : lobbies) {
+    for (const auto &lobbyPtr : lobbies) {
         if (lobbyPtr->getId() == lobbyId) {
             return lobbyPtr;
         }
@@ -223,12 +225,12 @@ shared_ptr<Lobby> Server::getLobby(int lobbyId) {
     return nullptr;
 }
 
-const vector<shared_ptr<Lobby>>& Server::getLobbies() {
+const vector<shared_ptr<Lobby>> &Server::getLobbies() {
     return lobbies;
 }
 
 bool Server::isLobbyJoinable(int lobbyId) {
-    for (const auto& lobby : lobbies) {
+    for (const auto &lobby : lobbies) {
         if (lobby->getId() == lobbyId) {
             return lobby->isJoinable();
         }
@@ -236,12 +238,12 @@ bool Server::isLobbyJoinable(int lobbyId) {
     return false;
 }
 
-void Server::registerClient(const string& username, int clientSocket) {
+void Server::registerClient(const string &username, int clientSocket) {
     clients.push_back(make_unique<Client>(username, clientSocket));
 }
 
-shared_ptr<Client> Server::getClientByUsername(const string& username) {
-    for (const auto& client : clients) {
+shared_ptr<Client> Server::getClientByUsername(const string &username) {
+    for (const auto &client : clients) {
         if (client->getUsername() == username) {
             return client;
         }
@@ -260,7 +262,7 @@ Server::~Server() {
      * a nema smysl resit, ale jedna se o good practice
      */
     close(masterSocket);
-    for (const auto& client : clients) {
+    for (const auto &client : clients) {
         close(client->getClientSocket());
     }
 }
