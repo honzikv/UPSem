@@ -29,6 +29,7 @@ void GameMessageHandler::sendBoard(const shared_ptr<Client>& client, const vecto
     message.add(REQUEST, UPDATE_BOARD);
 
     auto playerNo = 0;
+    //pro kazdeho hrace posleme jeho jmeno, celkovou hodnotu karet a karty
     for (const auto& player : players) {
         auto playerInfo = player->getPlayerInfo();
         message.add(PLAYER + to_string(playerNo), player->getUsername());
@@ -45,6 +46,7 @@ void GameMessageHandler::sendBoard(const shared_ptr<Client>& client, const vecto
         playerNo++;
     }
     message.add(PLAYER_COUNT, to_string(players.size()));
+    //dealer neni realny hrac tudiz ma pouze karty, skore se zobrazi az na konci po tom co dohraje
     auto cardNo = 0;
     for (const auto& card : dealer->getPlayerInfo()->getHand()) {
         message.add(DEALER + string(CARD) + to_string(cardNo), card->toString());

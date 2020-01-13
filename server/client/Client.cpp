@@ -59,6 +59,7 @@ void Client::createPlayerInfo(int bet) {
 }
 
 string Client::toString() {
+    //c++ "toString" pro vraceni jmena a stavu hrace pro frontend
     auto isReady = ready ? " READY" : " NOT READY";
     return string(getUsername() + isReady);
 }

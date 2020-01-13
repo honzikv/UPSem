@@ -82,8 +82,9 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
     auto username = message->valueOf(USERNAME);
     auto client = server.getClientByUsername(username);
 
+    //frontend validuje, takze se nikdy nestane pres implementovany klient
     if (!regex_match(username, usernameRegex)) {
-        cout << "Incorrect username format" << endl;
+        cout << "Client has illegal characters in their username, closing connection" << endl;
         server.closeConnection(clientSocket);
         return;
     }

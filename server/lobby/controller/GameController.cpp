@@ -11,10 +11,12 @@ GameController::GameController(Lobby& lobby) : lobby(lobby) {
 }
 
 void GameController::cancelGame() {
+    //Kazdemu z potvrzenych klientu posleme, ze hra se nemohla spustit - ti co nepotvrdili jsou vykopnuti
     for (const auto& client : confirmedClients) {
         gameMessageHandler->sendGameCouldNotStart(client);
     }
     confirmedClients.clear();
+    //nastavime stav lobby na cekajici a resetujeme ucasti klientu
     lobby.setLobbyState(LOBBY_STATE_WAITING);
     lobby.resetClientParticipation();
 }
@@ -27,6 +29,7 @@ void GameController::startGame() {
         }
     }
 
+    //vytvorime instanci tridy blackjack a rozdame karty, posleme vsem pozadavek pro pripraveni sceny a data
     blackjack = make_unique<Blackjack>(confirmedClients);
     blackjack->dealCards();
     for (const auto& client : blackjack->getPlayers()) {
@@ -34,6 +37,7 @@ void GameController::startGame() {
     }
     this->sendBoardUpdate();
 
+    //hraci, ktery je momentalne na rade posleme pozadavek o zahrani
     gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
     this->sendCurrentPlayer();
     lobby.setLobbyState(LOBBY_STATE_IN_GAME);
@@ -115,6 +119,9 @@ void GameController::prepareGame() {
 }
 
 void GameController::addConfirmedClient(shared_ptr<Client> client, int bet) {
+    if (bet < MIN_BET || bet > MAX_BET) {
+        bet = MIN_BET;
+    }
     confirmedClients.push_back(client);
     client->createPlayerInfo(bet);
 }

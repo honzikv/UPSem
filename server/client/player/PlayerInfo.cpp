@@ -25,6 +25,7 @@ int PlayerInfo::getHardHandValue() {
 }
 
 bool PlayerInfo::hasBlackjack() {
+    //Blackjack je kdykoliv kdy je kombo karet ACE + karta s hodnotou 10
     return hand.size() == 2 && handContainsRank(Card::ACE) ? handContainsRank(Card::TEN) ||
                                                              handContainsRank(Card::JACK) ||
                                                              handContainsRank(Card::QUEEN) ||
