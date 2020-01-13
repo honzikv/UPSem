@@ -17,7 +17,6 @@
 #define LOBBY_LIST "lobbyList"
 #define LOBBY "lobby"
 #define GAME "game"
-
 #define SEND_READY "sendReady"
 #define UPDATE_PLAYER_LIST "updatePlayerList"
 #define LEAVE_LOBBY "leaveLobby"

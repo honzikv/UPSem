@@ -91,7 +91,7 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
     //Pokud instance klienta k loginu neexistuje vytvorime novy
     if (client == nullptr) {
         server.registerClient(username, clientSocket);
-        sendLoginIsNew(clientSocket);
+        sendLogin(clientSocket);
         cout << "Welcome \"" << username << "\" to the server " << endl;
     } else {
         //Jinak odpojime predchozi pripojeni (pokud nebylo odpojeno)
@@ -107,7 +107,7 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
     }
 }
 
-void MessageHandler::sendLoginIsNew(int clientSocket) {
+void MessageHandler::sendLogin(int clientSocket) {
     auto message = TCPData(DATATYPE_RESPONSE);
     message.add(RESPONSE, LOGIN);
     message.add(RESTORE_STATE, FALSE);

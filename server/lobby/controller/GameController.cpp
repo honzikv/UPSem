@@ -178,5 +178,3 @@ bool GameController::autoSkipPlayer(const shared_ptr<Client>& client) {
     }
     return false;
 }
-
-

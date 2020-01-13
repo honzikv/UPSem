@@ -14,8 +14,6 @@
 #define IS_JOINABLE "isJoinable"
 #define DATA_TYPE "dataType"
 #define LOBBY_ID "lobbyId"
-#define IN_GAME "inGame"
-#define REMOVE_FROM_LOBBY "removeFromLobby"
 #define CLIENT "client"
 #define PLAYER_COUNT "playerCount"
 #define CARD "C"

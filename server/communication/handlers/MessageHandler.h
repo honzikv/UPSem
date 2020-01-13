@@ -68,7 +68,7 @@ class MessageHandler {
          * Zasle klientovi ze je login novy - tzn. nebude obnovovat stav
          * @param clientSocket cislo socketu klienta
          */
-        void sendLoginIsNew(int clientSocket);
+        void sendLogin(int clientSocket);
 
         /**
          * Pro vetveni odpovedi
