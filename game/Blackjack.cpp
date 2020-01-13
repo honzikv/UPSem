@@ -74,13 +74,15 @@ shared_ptr<TurnResult> Blackjack::handleStand(const shared_ptr<Client>& player) 
 }
 
 shared_ptr<TurnResult> Blackjack::handleDoubleDown(const shared_ptr<Client>& player) {
+    //Pokud se pokusil hrat jiny hrac, nez co je na rade
     if (players[currentPlayerIndex] != player) {
         return make_shared<TurnResult>(RESULT_NOT_YOUR_TURN, nullptr, player);
     }
 
+    //Pokud se hrac pokusil zahrat double down po zahrani HITu
     auto playerInfo = player->getPlayerInfo();
     if (playerInfo->hasHit()) {
-        return make_shared<TurnResult>(RESULT_HIT_AFTER_DOUBLE, nullptr, player);
+        return make_shared<TurnResult>(RESULT_DOUBLE_AFTER_HIT, nullptr, player);
     }
 
     playerInfo->doubleDown();

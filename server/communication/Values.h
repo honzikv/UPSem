@@ -21,7 +21,7 @@
 #define UPDATE_PLAYER_LIST "updatePlayerList"
 #define LEAVE_LOBBY "leaveLobby"
 #define CLIENT_DIDNT_CONFIRM "clientDidntConfirm"
-#define SHOW_MESSAGE "showMessage"
+#define SHOW_CURRENT_PLAYER "showCurrentPlayer"
 #define SHOW_PLAYER_DISCONNECTED "showPlayerDisconnected"
 #define SHOW_PLAYER_CONNECTED "showPlayerConnected"
 #define CONFIRM_PARTICIPATION "confirmParticipation"

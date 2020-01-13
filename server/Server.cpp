@@ -141,9 +141,9 @@ void Server::disconnectClients() {
      * spojeni se serverem + jine pozadavky. Po uplynuti timeoutu se u klienta nastavi pole disconnected na true,
      * pokud se neozve do delsi doby, jsou veskera data o klientovi odstranena.
      */
-    auto currentTime = chrono::system_clock::now();
+    auto currentTime = system_clock::now();
     for (const auto& client : clients) {
-        auto durationMillis = chrono::duration<double, milli>(
+        auto durationMillis = duration<double, milli>(
                 currentTime - client->getLastMessageReceived()).count();
 
         if (durationMillis > MAX_TIMEOUT_BEFORE_DISCONNECT_MS && client->getClientSocket() != -1) {
@@ -152,11 +152,11 @@ void Server::disconnectClients() {
     }
 
     //Smazani klientu, kteri se dlouho nepripojili pro snizeni pametove narocnosti
-    currentTime = chrono::system_clock::now();
+    currentTime = system_clock::now();
     auto clientsIt = clients.begin();
     while (clientsIt != clients.end()) {
         auto client = *clientsIt;
-        auto durationMillis = chrono::duration<double, milli>(
+        auto durationMillis = duration<double, milli>(
                 currentTime - client->getLastMessageReceived()).count();
 
         if (durationMillis > MAX_TIMEOUT_BEFORE_REMOVED_MS) {

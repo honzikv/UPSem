@@ -6,7 +6,7 @@
 
 
 Client::Client(string username, int clientSocket) : username(move(username)), clientSocket(clientSocket) {
-    lastMessageReceived = chrono::system_clock::now();
+    lastMessageReceived = system_clock::now();
 }
 
 const string& Client::getUsername() const {
@@ -43,10 +43,10 @@ void Client::setLobbyId(int lobbyId) {
 }
 
 void Client::updateLastMessageReceived() {
-    lastMessageReceived = chrono::system_clock::now();
+    lastMessageReceived = system_clock::now();
 }
 
-const chrono::time_point<chrono::system_clock>& Client::getLastMessageReceived() const {
+const time_point<system_clock>& Client::getLastMessageReceived() const {
     return lastMessageReceived;
 }
 

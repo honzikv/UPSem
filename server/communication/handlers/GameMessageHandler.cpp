@@ -62,8 +62,8 @@ void GameMessageHandler::sendPlayerTurnRequest(const shared_ptr<Client>& client)
 
 void GameMessageHandler::sendCurrentPlayer(const shared_ptr<Client>& client, const string& username) {
     auto message = TCPData(DATATYPE_REQUEST);
-    message.add(REQUEST, SHOW_MESSAGE);
-    message.add(SHOW_MESSAGE, "Waiting for client " + username + " to play");
+    message.add(REQUEST, SHOW_CURRENT_PLAYER);
+    message.add(USERNAME, username);
     sendMessage(client->getClientSocket(), message.serialize());
 }
 

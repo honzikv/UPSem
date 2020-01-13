@@ -134,7 +134,7 @@ class Client {
          * Getter pro ziskani casu posledni zpravy
          * @return referenci na time point posledniho casu zpravy
          */
-        const chrono::time_point<chrono::system_clock>& getLastMessageReceived() const;
+        const time_point<system_clock>& getLastMessageReceived() const;
 
         /**
          * Getter pro informace o hraci

@@ -37,7 +37,7 @@ void GameController::startGame() {
     gameMessageHandler->sendPlayerTurnRequest(blackjack->getCurrentPlayer());
     this->sendCurrentPlayer();
     lobby.setLobbyState(LOBBY_STATE_IN_GAME);
-    lastGameUpdate = chrono::system_clock::now();
+    lastGameUpdate = system_clock::now();
 }
 
 void GameController::sendBoardUpdate() {
@@ -54,8 +54,8 @@ void GameController::sendCurrentPlayer() {
 }
 
 void GameController::checkIfTimeForNextPlayer() {
-    auto currentTime = chrono::system_clock::now();
-    auto durationMillis = chrono::duration<double, milli>(currentTime - lastGameUpdate).count();
+    auto currentTime = system_clock::now();
+    auto durationMillis = duration<double, milli>(currentTime - lastGameUpdate).count();
 
     if (durationMillis > MAX_TIME_BEFORE_STAND_MS || autoSkipPlayer(blackjack->getCurrentPlayer())) {
         blackjack->skipPlayer();
@@ -81,8 +81,9 @@ void GameController::handlePlayerTurn(const shared_ptr<Client>& client, const sh
 
     if (turnResult->getResult() == RESULT_NOT_YOUR_TURN) {
         gameMessageHandler->sendNotYourTurn(client);
-    } else if (turnResult->getResult() == RESULT_HIT_AFTER_DOUBLE) {
+    } else if (turnResult->getResult() == RESULT_DOUBLE_AFTER_HIT) {
         gameMessageHandler->sendDoubleDownAfterHit(client);
+        gameMessageHandler->sendPlayerTurnRequest(client);
     } else {
         for (const auto& player : blackjack->getPlayers()) {
             gameMessageHandler->sendPlayerTurnResult(turnResult, player);
@@ -96,7 +97,7 @@ void GameController::handlePlayerTurn(const shared_ptr<Client>& client, const sh
 
 void GameController::prepareGame() {
     //Controller si zaznamena cas startu, klienti maji 60s na potvrzeni sazky
-    preparationStart = chrono::system_clock::now();
+    preparationStart = system_clock::now();
 
     //Kazdemu klientovi je poslan dotaz s tim kolik vsadi
     for (const auto& client : lobby.getClients()) {
@@ -111,8 +112,8 @@ void GameController::addConfirmedClient(shared_ptr<Client> client, int bet) {
 }
 
 bool GameController::hasPreparationTimeExpired() {
-    auto currentTime = chrono::system_clock::now();
-    auto durationMillis = chrono::duration<double, milli>(currentTime - preparationStart).count();
+    auto currentTime = system_clock::now();
+    auto durationMillis = duration<double, milli>(currentTime - preparationStart).count();
     return durationMillis >= LOBBY_PREP_TIME_MS || lobby.getClients().size() == confirmedClients.size();
 }
 
