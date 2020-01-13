@@ -80,7 +80,7 @@ void Server::selectServer() {
                     if (clientFileDescriptor < 0) {
                         cerr << "Error while accepting client" << endl;
                     } else {
-                        cout << "New connection socket id is " << clientFileDescriptor << " from ip"
+                        cout << "New connection! Socket no. " << clientFileDescriptor << " from ip "
                              << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
                     }
                 } else {
