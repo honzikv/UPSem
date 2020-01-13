@@ -141,7 +141,6 @@ bool GameController::isGameFinished() {
 }
 
 void GameController::endGame() {
-    cout << "ending game" << endl;
     sendBoardUpdate();
     gameMessageHandler->sendResults(blackjack->getPlayers(), blackjack->getDealer());
     lobby.setLobbyState(LOBBY_STATE_FINISHED);
