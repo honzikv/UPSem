@@ -62,7 +62,7 @@ void Server::selectServer() {
         tests = clientFileDescriptors;
 
         //nastaveni timeoutu
-        timeout.tv_sec = 300;
+        timeout.tv_sec = 2;
         timeout.tv_usec = 0;
 
         //nasledny block selectu
@@ -80,7 +80,7 @@ void Server::selectServer() {
                     if (clientFileDescriptor < 0) {
                         cerr << "Error while accepting client" << endl;
                     } else {
-                        cout << "New connection socket " << clientFileDescriptor << " from ip"
+                        cout << "New connection socket id is " << clientFileDescriptor << " from ip"
                              << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << endl;
                     }
                 } else {

@@ -95,7 +95,6 @@ shared_ptr<TurnResult> Blackjack::handleDoubleDown(const shared_ptr<Client>& pla
 }
 
 void Blackjack::moveToNextPlayer() {
-    cout << "moving to next player" << endl;
     currentPlayerIndex++;
     if (currentPlayerIndex == players.size()) {
         dealerPlay();
@@ -104,7 +103,6 @@ void Blackjack::moveToNextPlayer() {
 
 void Blackjack::dealerPlay() {
     //Dokud je ma dealerova ruka hodnotu mensi nez 17 pro mekky soucet bere si dalsi kartu
-    cout << "dealer is playing" << endl;
     while (dealer->getPlayerInfo()->getSoftHandValue() < DEALER_MAX_DRAW_SUM) {
         drawCard(dealer);
     }
