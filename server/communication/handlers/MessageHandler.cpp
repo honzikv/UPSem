@@ -97,7 +97,7 @@ void MessageHandler::handleLogin(int clientSocket, const shared_ptr<TCPData>& me
     } else {
         //Jinak odpojime predchozi pripojeni (pokud nebylo odpojeno)
         client = this->server.getClientByUsername(username);
-        if (client->getClientSocket() != -1) {
+        if (client->getClientSocket() != -1 && client->getClientSocket() != clientSocket) {
             sendClientReconnectedFromAnotherLocation(client->getClientSocket());
             server.closeConnection(client->getClientSocket());
         }
