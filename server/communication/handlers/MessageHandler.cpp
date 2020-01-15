@@ -43,7 +43,9 @@ void MessageHandler::pingBack(int clientSocket) {
     sendMessage(clientSocket, message.serialize());
 
     auto client = server.getClientBySocket(clientSocket);
-    client->updateLastMessageReceived();
+    if (client != nullptr) {
+        client->updateLastMessageReceived();
+    }
 }
 
 void MessageHandler::handleRequest(int clientSocket, const shared_ptr<TCPData>& message) {
